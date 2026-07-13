@@ -619,7 +619,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-17"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
+const BUILD_VERSION = "v2026-07-13-18"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -684,6 +684,10 @@ const MARKET_WEIGHT = 1 / Math.sqrt(3);
 const SECTOR_WEIGHT = 1 / Math.sqrt(3);
 const IDIO_WEIGHT   = 1 / Math.sqrt(3);
 
+// 평균회귀 강도: 기준가에서 벗어난 정도(로그비율)에 곱해져서 반대 방향 드리프트를 만듦
+// 값이 클수록 기준가로 되돌아가려는 힘이 세짐 (0으로 하면 순수 랜덤워크)
+const MEAN_REVERSION_STRENGTH = 0.5;
+
 const EVENT_TEMPLATES = [
   { type:"surge", text:n => `${n} 원육 파동! 공급 부족으로 가격 폭등`, min:1.10, max:1.20 },
   { type:"surge", text:n => `${n} 맛집으로 SNS 입소문, 수요 폭증`, min:1.07, max:1.15 },
@@ -702,6 +706,7 @@ let inMaintenance = false;
 let items = ITEM_DEFS.map(d => ({
   ...d,
   basePrice:d.price,   // 시장/섹터/이벤트로만 움직이는 기준가 (모든 클라이언트 공통, 결정론적)
+  anchorPrice:d.price, // 평균회귀의 기준점 (출시 당시 가격, 고정값)
   prevPrice:d.price,
   history:[d.price],
   floor: Math.max(500, Math.round(d.price*0.15)),
@@ -788,12 +793,16 @@ function processTick(tick, silent){
       nextBase = clampPrice(it.basePrice * factor, it);
       it._eventFlash = tmpl.type;
     } else {
-      // 상관관계 있는 드리프트 = 시장 공통 요인 + 같은 계열 공통 요인 + 이 품목만의 개별 요인
+      // 상관관계 있는 드리프트 = 시장 공통 요인 + 같은 계열 공통 요인 + 이 품목만의 개별 요인 + 평균회귀
       const idioRand = randAt(it.id+'|drift|'+tick);
       const marketShock = (marketRand*2 - 1) * it.vol * MARKET_WEIGHT;
       const sectorShock = (sectorRand[it.sector]*2 - 1) * it.vol * SECTOR_WEIGHT;
       const idioShock   = (idioRand*2 - 1) * it.vol * IDIO_WEIGHT;
-      const delta = marketShock + sectorShock + idioShock;
+      // 기준가 대비 얼마나 벗어나 있는지(로그 비율)에 비례해서 반대 방향으로 힘을 줌
+      // -> 많이 오른 종목일수록 다음 틱에 내려갈 확률이, 많이 내린 종목일수록 오를 확률이 높아짐
+      const logRatio = Math.log(it.basePrice / it.anchorPrice);
+      const reversionShock = -MEAN_REVERSION_STRENGTH * logRatio * it.vol;
+      const delta = marketShock + sectorShock + idioShock + reversionShock;
       nextBase = clampPrice(it.basePrice * (1 + delta), it);
     }
     it.basePrice = nextBase; // 모두가 공유하는 기준가 (결정론적)

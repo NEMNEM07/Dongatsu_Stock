@@ -618,10 +618,12 @@ function renderTicker(){
 }
 
 /* ========================= 리더보드 (Apps Script 연동) ========================= */
+let resetNoticeShown = false;
+
 async function pushScore(){
   if(!APPS_SCRIPT_URL || !player.name) return;
   try{
-    await fetch(APPS_SCRIPT_URL, {
+    const res = await fetch(APPS_SCRIPT_URL, {
       method:"POST",
       headers:{ "Content-Type":"text/plain" },
       body: JSON.stringify({
@@ -633,6 +635,13 @@ async function pushScore(){
         total: Math.round(totalPortfolio())
       })
     });
+    const data = await res.json();
+    if(!data.ok && data.error === "not_found" && !resetNoticeShown){
+      resetNoticeShown = true;
+      showEventBanner("관리자가 게임을 초기화했어요. 3초 후 재입장 화면으로 돌아갑니다");
+      setTimeout(()=>location.reload(), 3000);
+      return;
+    }
     document.getElementById("lbStatus").textContent = "실시간 연결됨";
   }catch(e){
     document.getElementById("lbStatus").textContent = "연결 오류 · 재시도 중";

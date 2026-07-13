@@ -145,6 +145,15 @@
   .card-top{display:flex;justify-content:space-between;align-items:center;}
   .card-name{font-size:15px;font-weight:700;color:var(--cream);}
   .card-emoji{font-size:20px;margin-right:6px;}
+  .sector-tag{
+    display:inline-block;margin-left:7px;padding:2px 7px;
+    border-radius:8px;font-size:9.5px;font-weight:800;
+    vertical-align:middle;letter-spacing:.02em;
+  }
+  .sector-tag.sector-premium{background:rgba(201,162,39,.18);color:var(--gold-bright);}
+  .sector-tag.sector-disease{background:rgba(212,85,63,.18);color:var(--down);}
+  .sector-tag.sector-pet{background:rgba(95,191,133,.18);color:var(--up);}
+  .sector-tag.sector-wild{background:rgba(111,155,209,.2);color:#8db4e0;}
 
   .mode-toggle{
     display:flex;gap:2px;flex-shrink:0;margin-left:8px;
@@ -458,7 +467,7 @@
   <div>
     <div class="board job-board">
       <h3 class="board-title" style="margin-bottom:10px;">알바</h3>
-      <p class="board-sub" style="margin-bottom:14px;">시세가 안 움직일 땐 버튼을 눌러 소소하게 벌어보세요 (0.5초마다 한 번)</p>
+      <p class="board-sub" style="margin-bottom:14px;">시세가 안 움직일 땐 버튼을 눌러 소소하게 벌어보세요 (1초마다 한 번)</p>
       <div class="job-toast-wrap" id="jobToastWrap"></div>
       <button id="jobBtn" class="job-btn">
         <span class="cooldown-fill" id="jobCooldownFill"></span>
@@ -506,6 +515,11 @@
     </div>
 
     <div class="guide-section">
+      <h3>🔗 계열(섹터)</h3>
+      <p>각 카드 이름 옆에 <span class="sector-tag sector-premium">프리미엄</span> <span class="sector-tag sector-disease">질병</span> <span class="sector-tag sector-pet">반려동물</span> <span class="sector-tag sector-wild">야생</span> 태그가 붙어있어요. <b>같은 계열끼리는 가격이 어느 정도 같이 움직이는 경향</b>이 있어요 — 한 품목이 오르면 같은 계열의 다른 품목도 따라 오를 확률이 높아요. 가끔은 계열 전체가 한꺼번에 급등락하는 이벤트도 떠요. 이 관계를 파악하면 예측에 도움이 돼요.</p>
+    </div>
+
+    <div class="guide-section">
       <h3><span class="guide-tag long">롱</span> 오를 것 같을 때</h3>
       <p>가격이 <b>오를 것 같으면</b> 롱 모드에서 <b>매수</b>로 미리 사두세요. 실제로 가격이 오르면 <b>매도</b>로 팔아서 차익을 남겨요.</p>
       <ul>
@@ -527,7 +541,7 @@
 
     <div class="guide-section">
       <h3>🍽️ 알바</h3>
-      <p>시세가 안 움직여서 심심할 때, 사이드바의 알바 버튼을 눌러보세요. 클릭 한 번에 300~700원을 랜덤으로 벌 수 있어요. 다만 <b>0.5초 쿨다운</b>이 있어서 너무 빠르게 연타는 안 돼요.</p>
+      <p>시세가 안 움직여서 심심할 때, 사이드바의 알바 버튼을 눌러보세요. 클릭 한 번에 100~200원을 랜덤으로 벌 수 있어요. 다만 <b>1초 쿨다운</b>이 있어서 너무 빠르게 연타는 안 돼요.</p>
     </div>
 
     <div class="guide-section">
@@ -556,26 +570,36 @@ const STARTING_CASH = 100000;
 const LB_POLL_MS = 5000;       // 리더보드 갱신 주기
 const HISTORY_LEN = 30;
 
-const JOB_COOLDOWN_MS = 1000;   // 알바 버튼 쿨다운 (매크로/연타 방지)
+const JOB_COOLDOWN_MS = 1000;  // 알바 버튼 쿨다운 (매크로/연타 방지)
 const JOB_MIN_EARN = 100;
 const JOB_MAX_EARN = 200;
 const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
 const BANKRUPTCY_CASH = 50000; // 파산 신청 시 재지급되는 금액 (시작 자금보다 적은 페널티)
 
 const ITEM_DEFS = [
-  { id:"yanghojae", name:"양호재의 초울트라 레전드 양호재급 돈까스", emoji:"🏆", price:22000, vol:0.030 },
-  { id:"byeonggwon", name:"이병권의 외이도염 돈까스",                emoji:"👂", price:9000,  vol:0.033 },
-  { id:"hyeonsu",    name:"조현수의 기흉 돈까스",                    emoji:"🫁", price:13000, vol:0.038 },
-  { id:"jonghak",    name:"최종학의 스핑크스 돈까스",                emoji:"🗿", price:16000, vol:0.017 },
-  { id:"neunghwan",  name:"김릉환의 블루 돈까스",                    emoji:"🐱", price:11500, vol:0.024 },
-  { id:"jeonggeun",  name:"송정근의 세리 돈까스",                    emoji:"🐶", price:10500, vol:0.026 },
-  { id:"hyeonwoo",   name:"엄현우의 대상포진 돈까스",                emoji:"🩹", price:8500,  vol:0.040 },
-  { id:"jiyoon",     name:"장지윤의 고양이 돈가스",                  emoji:"🐈", price:12500, vol:0.023 },
-  { id:"gyeongyeol", name:"백경열의 실버 돈까스",                    emoji:"🥈", price:15000, vol:0.019 },
-  { id:"wolf",       name:"늑대사냥꾼 돈까스",                       emoji:"🐺", price:19000, vol:0.032 },
-  { id:"hyeonbin",   name:"정현빈의 쌕쌔기 돈까스",                  emoji:"🦗", price:7500,  vol:0.045 },
-  { id:"dongwon",    name:"복동원의 쇠구슬 돈까스",                  emoji:"⚙️", price:13500, vol:0.021 },
+  { id:"yanghojae", name:"양호재의 초울트라 레전드 양호재급 돈까스", emoji:"🏆", price:22000, vol:0.030, sector:"premium" },
+  { id:"byeonggwon", name:"이병권의 외이도염 돈까스",                emoji:"👂", price:9000,  vol:0.033, sector:"disease" },
+  { id:"hyeonsu",    name:"조현수의 기흉 돈까스",                    emoji:"🫁", price:13000, vol:0.038, sector:"disease" },
+  { id:"jonghak",    name:"최종학의 스핑크스 돈까스",                emoji:"🗿", price:16000, vol:0.017, sector:"premium" },
+  { id:"neunghwan",  name:"김릉환의 블루 돈까스",                    emoji:"🐱", price:11500, vol:0.024, sector:"pet" },
+  { id:"jeonggeun",  name:"송정근의 세리 돈까스",                    emoji:"🐶", price:10500, vol:0.026, sector:"pet" },
+  { id:"hyeonwoo",   name:"엄현우의 대상포진 돈까스",                emoji:"🩹", price:8500,  vol:0.040, sector:"disease" },
+  { id:"jiyoon",     name:"장지윤의 고양이 돈가스",                  emoji:"🐈", price:12500, vol:0.023, sector:"pet" },
+  { id:"gyeongyeol", name:"백경열의 실버 돈까스",                    emoji:"🥈", price:15000, vol:0.019, sector:"premium" },
+  { id:"wolf",       name:"늑대사냥꾼 돈까스",                       emoji:"🐺", price:19000, vol:0.032, sector:"wild" },
+  { id:"hyeonbin",   name:"정현빈의 쌕쌔기 돈까스",                  emoji:"🦗", price:7500,  vol:0.045, sector:"wild" },
+  { id:"dongwon",    name:"복동원의 쇠구슬 돈까스",                  emoji:"⚙️", price:13500, vol:0.021, sector:"wild" },
 ];
+
+// 계열(섹터) 정의: 같은 계열끼리는 가격이 같이 움직이는 경향이 생김
+const SECTOR_LABELS = { premium:"프리미엄", disease:"질병", pet:"반려동물", wild:"야생" };
+const SECTOR_KEYS = Object.keys(SECTOR_LABELS);
+const SECTOR_EVENT_PROB = 0.3; // 이벤트가 터질 때, 그중 이 확률로 개별 품목이 아니라 계열 전체가 한꺼번에 움직임
+
+// 팩터 모델 가중치: 시장 공통 요인 + 섹터 공통 요인 + 개별 요인 (제곱합이 1이 되도록 맞춰서 전체 변동폭은 기존과 비슷하게 유지)
+const MARKET_WEIGHT = 1 / Math.sqrt(3);
+const SECTOR_WEIGHT = 1 / Math.sqrt(3);
+const IDIO_WEIGHT   = 1 / Math.sqrt(3);
 
 const EVENT_TEMPLATES = [
   { type:"surge", text:n => `${n} 원육 파동! 공급 부족으로 가격 폭등`, min:1.35, max:1.8 },
@@ -600,6 +624,11 @@ let items = ITEM_DEFS.map(d => ({
   ceiling: Math.round(d.price*6)
 }));
 let sparkCtxCache = {};
+
+// 섹터별로 속한 품목 id 묶음 (같이 움직여야 할 그룹)
+const SECTORS = {};
+for(const key of SECTOR_KEYS) SECTORS[key] = [];
+for(const it of items) SECTORS[it.sector].push(it.id);
 
 /* ========================= 유틸 ========================= */
 const won = n => (n < 0 ? "-" : "") + "₩" + Math.round(Math.abs(n)).toLocaleString("ko-KR");
@@ -646,13 +675,26 @@ function processTick(tick, silent){
   let tmpl = null;
 
   if(eventRoll < EVENT_PROB){
-    const n = randAt('event|n|'+tick) < 0.35 ? 2 : 1;
-    const scored = items.map(it => ({ id: it.id, score: randAt(it.id+'|event|pick|'+tick) }));
-    scored.sort((a,b) => a.score - b.score);
-    eventItemIds = scored.slice(0, n).map(s => s.id);
+    const sectorRoll = randAt('event|sectorRoll|'+tick);
+    if(sectorRoll < SECTOR_EVENT_PROB){
+      // 계열(섹터) 전체를 한꺼번에 덮치는 이벤트
+      const sIdx = Math.floor(randAt('event|sectorPick|'+tick) * SECTOR_KEYS.length);
+      const sectorKey = SECTOR_KEYS[Math.min(sIdx, SECTOR_KEYS.length - 1)];
+      eventItemIds = SECTORS[sectorKey].slice();
+    } else {
+      const n = randAt('event|n|'+tick) < 0.35 ? 2 : 1;
+      const scored = items.map(it => ({ id: it.id, score: randAt(it.id+'|event|pick|'+tick) }));
+      scored.sort((a,b) => a.score - b.score);
+      eventItemIds = scored.slice(0, n).map(s => s.id);
+    }
     const tmplIdx = Math.floor(randAt('event|tmpl|'+tick) * EVENT_TEMPLATES.length);
     tmpl = EVENT_TEMPLATES[Math.min(tmplIdx, EVENT_TEMPLATES.length-1)];
   }
+
+  // 이번 틱의 공통 요인들 (모든 품목이 공유하는 시장 요인 1개 + 섹터별 요인 4개)
+  const marketRand = randAt('factor|market|'+tick);
+  const sectorRand = {};
+  for(const key of SECTOR_KEYS) sectorRand[key] = randAt('factor|sector|'+key+'|'+tick);
 
   for(const it of items){
     it.prevPrice = it.price;
@@ -662,8 +704,12 @@ function processTick(tick, silent){
       next = clampPrice(it.price * factor, it);
       it._eventFlash = tmpl.type;
     } else {
-      const driftRand = randAt(it.id+'|drift|'+tick);
-      const delta = (driftRand*2 - 1) * it.vol;
+      // 상관관계 있는 드리프트 = 시장 공통 요인 + 같은 계열 공통 요인 + 이 품목만의 개별 요인
+      const idioRand = randAt(it.id+'|drift|'+tick);
+      const marketShock = (marketRand*2 - 1) * it.vol * MARKET_WEIGHT;
+      const sectorShock = (sectorRand[it.sector]*2 - 1) * it.vol * SECTOR_WEIGHT;
+      const idioShock   = (idioRand*2 - 1) * it.vol * IDIO_WEIGHT;
+      const delta = marketShock + sectorShock + idioShock;
       next = clampPrice(it.price * (1 + delta), it);
     }
     it.price = next;
@@ -959,7 +1005,7 @@ function renderItems(){
       card.id = "card-"+it.id;
       card.innerHTML = `
         <div class="card-top">
-          <div class="card-name"><span class="card-emoji">${it.emoji}</span>${it.name}</div>
+          <div class="card-name"><span class="card-emoji">${it.emoji}</span>${it.name}<span class="sector-tag sector-${it.sector}">${SECTOR_LABELS[it.sector]}</span></div>
           <div class="mode-toggle" data-id="${it.id}">
             <button class="mode-btn active" data-mode="long">롱</button>
             <button class="mode-btn" data-mode="short">숏</button>

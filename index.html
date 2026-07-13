@@ -1029,13 +1029,13 @@ function showEventBanner(msg){
 }
 
 /* ========================= 거래 ========================= */
-const SHORT_MARGIN_MULT = 1.5; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
+const SHORT_MARGIN_MULT = 3; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
 const SHORT_FEE_RATE = 0.01;   // 숏 진입 시 수수료 1% - "찍고 바로 커버" 무위험 사이클에 마찰 추가
 const SHORT_MATURITY_MS = 45000; // 숏 포지션 만기 (45초) - 지나면 시장가로 강제 청산
 
 /* ========================= 레버리지 (롱 포지션) ========================= */
 const LEVERAGE_OPTIONS = [1, 2, 3]; // 선택 가능한 배율
-const LEVERAGE_MARGIN_MULT = 1.5;   // 총자산 대비 빌릴 수 있는 부채 총 한도 (숏 증거금 한도와 동일하게 맞춤)
+const LEVERAGE_MARGIN_MULT = 2;   // 총자산 대비 빌릴 수 있는 부채 총 한도 (숏 증거금 한도와 동일하게 맞춤)
 const LEVERAGE_FEE_RATE = 0.01;     // 레버리지(2x 이상) 사용 시 증거금에 붙는 추가 수수료 1%
 const MAINTENANCE_MARGIN_RATIO = 0.15; // 포지션 가치 대비 자기자본 비율이 이 밑으로 떨어지면 마진콜(강제청산)
 const TRADE_FEE_RATE = 0.005; // 매수/매도(롱) 왕복 수수료 0.5%씩 - 숏의 마찰(수수료/증거금/만기)과 균형 맞춤

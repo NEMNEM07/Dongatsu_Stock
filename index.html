@@ -572,9 +572,14 @@
       <h3><span class="guide-tag long">롱</span> 오를 것 같을 때</h3>
       <p>가격이 <b>오를 것 같으면</b> 롱 모드에서 <b>매수</b>로 미리 사두세요. 실제로 가격이 오르면 <b>매도</b>로 팔아서 차익을 남겨요.</p>
       <ul>
-        <li><b>매수</b>: 지금 가격으로 사서 보유량을 늘림 (현금 감소)</li>
-        <li><b>매도</b>: 보유한 만큼 팔아서 현금으로 바꿈 (많이 오른 뒤에 팔수록 이득)</li>
+        <li><b>매수</b>: 지금 가격으로 사서 보유량을 늘림 (현금 감소, 수수료 0.5%)</li>
+        <li><b>매도</b>: 보유한 만큼 팔아서 현금으로 바꿈 (많이 오른 뒤에 팔수록 이득, 수수료 0.5%)</li>
       </ul>
+    </div>
+
+    <div class="guide-section">
+      <h3>💰 자산세</h3>
+      <p>현금이 <b>1,000만원</b>을 넘으면 30초마다 초과분의 <b>2%</b>가 세금으로 빠져나가요. 큰돈을 현금으로 계속 쌓아두지 말고 거래에 굴리는 게 유리해요.</p>
     </div>
 
     <div class="guide-section">
@@ -614,11 +619,11 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-13"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
+const BUILD_VERSION = "v2026-07-13-14"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
-const EVENT_PROB = 0.2;        // 틱마다 이벤트가 발생할 확률 (평균 ~3.3틱=10초 간격)
+const EVENT_PROB = 0.3;        // 틱마다 이벤트가 발생할 확률 (평균 ~3.3틱=10초 간격)
 const EPOCH = Date.UTC(2026, 6, 13, 0, 0, 0); // 모든 클라이언트가 공유하는 기준 시각 (배포 전 오늘 날짜로 맞춰두면 됨)
 const STARTING_CASH = 100000;
 const LB_POLL_MS = 5000;       // 리더보드 갱신 주기
@@ -852,6 +857,12 @@ function showEventBanner(msg){
 const SHORT_MARGIN_MULT = 1.5; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
 const SHORT_FEE_RATE = 0.01;   // 숏 진입 시 수수료 1% - "찍고 바로 커버" 무위험 사이클에 마찰 추가
 const SHORT_MATURITY_MS = 45000; // 숏 포지션 만기 (90초) - 지나면 시장가로 강제 청산
+const TRADE_FEE_RATE = 0.005; // 매수/매도(롱) 왕복 수수료 0.5%씩 - 숏의 마찰(수수료/증거금/만기)과 균형 맞춤
+
+// 자산세: 현금이 일정 금액을 넘으면 주기적으로 초과분의 일부를 과세 - 억대 스노우볼링 방지용
+const WEALTH_TAX_THRESHOLD = 10000000; // 1천만원 초과분부터 과세
+const WEALTH_TAX_RATE = 0.02;          // 초과분의 2%
+const WEALTH_TAX_INTERVAL_MS = 10000;  // 30초마다
 
 function currentShortExposure(excludeId){
   let exp = 0;
@@ -884,7 +895,7 @@ window.addEventListener("beforeunload", sendFinalStateBeacon);
 function buy(id, qty){
   qty = Math.max(1, Math.floor(qty)||1);
   const it = items.find(i=>i.id===id);
-  const cost = it.price * qty;
+  const cost = Math.round(it.price * qty * (1 + TRADE_FEE_RATE));
   if(cost > player.cash) return flashCard(id,"insufficient");
   player.cash -= cost;
   player.holdings[id] = (player.holdings[id]||0) + qty;
@@ -899,7 +910,8 @@ function sell(id, qty){
   const have = player.holdings[id]||0;
   if(qty > have) qty = have;
   if(qty <= 0) return;
-  player.cash += it.price * qty;
+  const proceeds = Math.round(it.price * qty * (1 - TRADE_FEE_RATE));
+  player.cash += proceeds;
   player.holdings[id] = have - qty;
   renderItems(); renderWallet();
   pushScore();
@@ -994,6 +1006,22 @@ function renderShortTimers(){
 }
 
 setInterval(()=>{ checkShortExpiries(); renderShortTimers(); }, 1000);
+
+/* ========================= 자산세 (억대 스노우볼링 방지) ========================= */
+function applyWealthTax(){
+  if(!player.name) return; // 아직 입장 안 했으면 패스
+  if(player.cash <= WEALTH_TAX_THRESHOLD) return;
+
+  const taxable = player.cash - WEALTH_TAX_THRESHOLD;
+  const tax = Math.round(taxable * WEALTH_TAX_RATE);
+  if(tax <= 0) return;
+
+  player.cash -= tax;
+  renderWallet();
+  showEventBanner(`💰 자산세 ${won(tax)} 징수 (현금 ${won(WEALTH_TAX_THRESHOLD)} 초과분의 ${(WEALTH_TAX_RATE*100).toFixed(0)}%)`);
+  pushScore();
+}
+setInterval(applyWealthTax, WEALTH_TAX_INTERVAL_MS);
 
 
 function flashCard(id, mode){

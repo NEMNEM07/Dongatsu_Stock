@@ -69,7 +69,7 @@
 
   /* ===== Header ===== */
   header{
-    max-width:1180px;margin:0 auto;
+    max-width:1360px;margin:0 auto;
     padding:34px 20px 18px;
     display:flex;justify-content:space-between;align-items:flex-end;
     gap:20px;flex-wrap:wrap;
@@ -100,13 +100,13 @@
 
   /* ===== Layout ===== */
   .layout{
-    max-width:1180px;margin:0 auto;
+    max-width:1360px;margin:0 auto;
     padding:26px 20px 80px;
     display:grid;
     grid-template-columns:1fr 320px;
     gap:22px;
   }
-  @media (max-width:880px){.layout{grid-template-columns:1fr;}}
+  @media (max-width:980px){.layout{grid-template-columns:1fr;}}
 
   .board-title{
     font-family:'Gowun Batang',serif;
@@ -117,8 +117,9 @@
   .board-title::after{content:"";flex:1;height:1px;background:var(--line);}
 
   .grid-items{
-    display:grid;grid-template-columns:1fr 1fr;gap:14px;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;
   }
+  @media (max-width:980px){.grid-items{grid-template-columns:1fr 1fr;}}
   @media (max-width:600px){.grid-items{grid-template-columns:1fr;}}
 
   .card{
@@ -260,6 +261,12 @@
     margin-top:16px;font-family:'JetBrains Mono',monospace;
     font-size:12px;color:var(--cream-dim);
   }
+  .modal-card .modal-error{
+    min-height:16px;
+    font-size:12px;color:var(--down);
+    margin:-8px 0 12px;
+  }
+  .modal-card button:disabled{opacity:.5;cursor:not-allowed;}
 
   footer{
     text-align:center;color:var(--cream-dim);
@@ -275,6 +282,7 @@
     <h2>돈까스거래소 입장</h2>
     <p>이름을 입력하고 예측 트레이딩을 시작하세요</p>
     <input id="nameInput" maxlength="10" placeholder="닉네임 (최대 10자)" autocomplete="off">
+    <div class="modal-error" id="nameError"></div>
     <button id="startBtn">입장하기</button>
     <div class="starting">기초 자금 100,000원 지급</div>
   </div>
@@ -319,7 +327,7 @@
 <script>
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
+const APPS_SCRIPT_URL = "";
 
 const TICK_MS = 3000;          // 가격 갱신 주기
 const EVENT_MIN_MS = 18000;    // 이벤트 최소 간격
@@ -329,12 +337,18 @@ const LB_POLL_MS = 5000;       // 리더보드 갱신 주기
 const HISTORY_LEN = 30;
 
 const ITEM_DEFS = [
-  { id:"king",   name:"왕돈까스",     emoji:"🍖", price:14000, vol:0.022 },
-  { id:"cheese", name:"치즈돈까스",   emoji:"🧀", price:11000, vol:0.028 },
-  { id:"curry",  name:"카레돈까스",   emoji:"🍛", price:10000, vol:0.025 },
-  { id:"spicy",  name:"매운돈까스",   emoji:"🌶️", price:12000, vol:0.035 },
-  { id:"sweet",  name:"고구마돈까스", emoji:"🍠", price:9500,  vol:0.020 },
-  { id:"black",  name:"흑돼지돈까스", emoji:"🐷", price:18000, vol:0.018 },
+  { id:"yanghojae", name:"양호재의 초울트라 레전드 양호재급 돈까스", emoji:"🏆", price:22000, vol:0.030 },
+  { id:"byeonggwon", name:"이병권의 외이도염 돈까스",                emoji:"👂", price:9000,  vol:0.033 },
+  { id:"hyeonsu",    name:"조현수의 기흉 돈까스",                    emoji:"🫁", price:13000, vol:0.038 },
+  { id:"jonghak",    name:"최종학의 스핑크스 돈까스",                emoji:"🗿", price:16000, vol:0.017 },
+  { id:"neunghwan",  name:"김릉환의 블루 돈까스",                    emoji:"🐱", price:11500, vol:0.024 },
+  { id:"jeonggeun",  name:"송정근의 세리 돈까스",                    emoji:"🐶", price:10500, vol:0.026 },
+  { id:"hyeonwoo",   name:"엄현우의 대상포진 돈까스",                emoji:"🩹", price:8500,  vol:0.040 },
+  { id:"jiyoon",     name:"장지윤의 고양이 돈가스",                  emoji:"🐈", price:12500, vol:0.023 },
+  { id:"gyeongyeol", name:"백경열의 실버 돈까스",                    emoji:"🥈", price:15000, vol:0.019 },
+  { id:"wolf",       name:"늑대사냥꾼 돈까스",                       emoji:"🐺", price:19000, vol:0.032 },
+  { id:"hyeonbin",   name:"정현빈의 쌕쌔기 돈까스",                  emoji:"🦗", price:7500,  vol:0.045 },
+  { id:"dongwon",    name:"복동원의 쇠구슬 돈까스",                  emoji:"⚙️", price:13500, vol:0.021 },
 ];
 
 const EVENT_TEMPLATES = [
@@ -608,10 +622,43 @@ document.getElementById("nameInput").addEventListener("keydown", e=>{
   if(e.key === "Enter") startGame();
 });
 
-function startGame(){
+async function startGame(){
   const input = document.getElementById("nameInput");
+  const errEl = document.getElementById("nameError");
+  const btn = document.getElementById("startBtn");
   const name = input.value.trim();
-  if(!name){ input.focus(); input.style.borderColor="var(--down)"; return; }
+  errEl.textContent = "";
+
+  if(!name){ input.focus(); input.style.borderColor="var(--down)"; errEl.textContent="이름을 입력해주세요"; return; }
+  input.style.borderColor = "";
+
+  btn.disabled = true;
+  btn.textContent = "확인 중...";
+
+  if(APPS_SCRIPT_URL){
+    try{
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain" },
+        body: JSON.stringify({ action:"join", name })
+      });
+      const data = await res.json();
+      if(!data.ok){
+        errEl.textContent = data.error === "taken"
+          ? "이미 사용 중인 이름이에요. 다른 이름을 입력해주세요"
+          : "입장에 실패했어요. 다시 시도해주세요";
+        btn.disabled = false;
+        btn.textContent = "입장하기";
+        return;
+      }
+    }catch(e){
+      errEl.textContent = "서버 연결에 실패했어요. 다시 시도해주세요";
+      btn.disabled = false;
+      btn.textContent = "입장하기";
+      return;
+    }
+  }
+
   player.name = name;
   document.getElementById("nameModal").style.display = "none";
 

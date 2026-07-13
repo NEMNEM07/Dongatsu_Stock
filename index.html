@@ -188,6 +188,11 @@
     margin-bottom:8px;
     font-family:'JetBrains Mono',monospace;
   }
+  .expiry-line{
+    font-size:10.5px;color:var(--down);margin:-4px 0 8px;
+    display:none;font-weight:700;
+  }
+  .expiry-line.show{display:block;}
   .trade-row{display:flex;gap:6px;}
   .trade-row input{
     width:56px;background:var(--ink-900);
@@ -581,6 +586,7 @@
         <li>반대로 가격이 오르면 손해를 볼 수 있어요 — 숏은 롱보다 위험 부담이 있는 대신 하락장에서도 돈을 벌 수 있는 방법이에요</li>
         <li>롱 보유 중엔 숏 불가, 숏 보유 중엔 롱 매수는 자동으로 커버부터 처리돼요</li>
         <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 1.5배</b>까지만 숏 노출이 허용돼요</li>
+        <li>숏은 <b>만기가 90초</b>예요. 진입/추가할 때마다 타이머가 90초로 갱신되고, 카드에 남은 시간이 표시돼요. 만기 지나면 그 순간 시장가로 <b>강제 청산</b>돼요 — 현금이 부족해도 강제로 집행되니 빚(마이너스 자산)이 생길 수 있어요, 그럴 땐 파산 신청을 쓰세요</li>
       </ul>
     </div>
 
@@ -608,7 +614,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-12"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
+const BUILD_VERSION = "v2026-07-13-13"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -683,7 +689,7 @@ const EVENT_TEMPLATES = [
 ];
 
 /* ========================= 상태 ========================= */
-let player = { name:"", password:"", cash:STARTING_CASH, holdings:{}, jobLevel:1 };
+let player = { name:"", password:"", cash:STARTING_CASH, holdings:{}, jobLevel:1, shortExpiry:{} };
 let cardMode = {}; // { itemId: 'long' | 'short' } 카드별 현재 거래 모드 (기본 롱)
 let jobEarnedTotal = 0;
 let lastJobClickAt = 0; // performance.now() 기준, 쿨다운 판정용 (버튼 disabled 조작에 대한 이중 방어)
@@ -845,6 +851,7 @@ function showEventBanner(msg){
 /* ========================= 거래 ========================= */
 const SHORT_MARGIN_MULT = 1.5; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
 const SHORT_FEE_RATE = 0.01;   // 숏 진입 시 수수료 1% - "찍고 바로 커버" 무위험 사이클에 마찰 추가
+const SHORT_MATURITY_MS = 90000; // 숏 포지션 만기 (90초) - 지나면 시장가로 강제 청산
 
 function currentShortExposure(excludeId){
   let exp = 0;
@@ -881,6 +888,7 @@ function buy(id, qty){
   if(cost > player.cash) return flashCard(id,"insufficient");
   player.cash -= cost;
   player.holdings[id] = (player.holdings[id]||0) + qty;
+  if(player.holdings[id] >= 0) delete player.shortExpiry[id];
   renderItems(); renderWallet();
   pushScore(); // 거래 즉시 서버에 반영 (안 그러면 바로 나갔을 때 매도/매수가 유실될 수 있음)
 }
@@ -916,6 +924,7 @@ function shortSell(id, qty){
   const fee = Math.round(grossProceeds * SHORT_FEE_RATE);
   player.cash += grossProceeds - fee; // 진입 수수료만큼 덜 받음
   player.holdings[id] = have - qty;
+  player.shortExpiry[id] = Date.now() + SHORT_MATURITY_MS; // 진입/추가할 때마다 만기 타이머 갱신
   renderItems(); renderWallet();
   pushScore();
 }
@@ -934,9 +943,57 @@ function coverShort(id, qty){
 
   player.cash -= it.price * qty;
   player.holdings[id] = have + qty;
+  if(player.holdings[id] >= 0) delete player.shortExpiry[id];
   renderItems(); renderWallet();
   pushScore();
 }
+
+/* ========================= 숏 만기 강제청산 ========================= */
+// 만기 지난 숏 포지션을 현재가로 강제로 커버시킴 (현금 부족해도 강제 집행 - 마이너스 현금 허용)
+function forceLiquidateShort(itemId){
+  const it = items.find(i=>i.id===itemId);
+  const have = player.holdings[itemId] || 0;
+  if(!it || have >= 0){ delete player.shortExpiry[itemId]; return; }
+
+  const qty = -have;
+  const cost = it.price * qty;
+  player.cash -= cost;
+  player.holdings[itemId] = 0;
+  delete player.shortExpiry[itemId];
+  showEventBanner(`⏰ ${it.name} 숏 포지션 만기! ${won(cost)}에 강제 청산됐어요`);
+}
+
+function checkShortExpiries(){
+  const now = Date.now();
+  let liquidatedAny = false;
+  for(const itemId of Object.keys(player.shortExpiry)){
+    if(now >= player.shortExpiry[itemId]){
+      forceLiquidateShort(itemId);
+      liquidatedAny = true;
+    }
+  }
+  if(liquidatedAny){ renderItems(); renderWallet(); pushScore(); }
+}
+
+// 카드에 숏 만기까지 남은 시간 표시
+function renderShortTimers(){
+  const now = Date.now();
+  for(const it of items){
+    const el = document.getElementById("expiry-"+it.id);
+    if(!el) continue;
+    const expiry = player.shortExpiry[it.id];
+    if(typeof expiry === "number" && (player.holdings[it.id]||0) < 0){
+      const remainSec = Math.max(0, Math.ceil((expiry - now)/1000));
+      el.textContent = `⏰ 숏 만기까지 ${remainSec}초`;
+      el.classList.add("show");
+    } else {
+      el.classList.remove("show");
+      el.textContent = "";
+    }
+  }
+}
+
+setInterval(()=>{ checkShortExpiries(); renderShortTimers(); }, 1000);
 
 
 function flashCard(id, mode){
@@ -1090,6 +1147,7 @@ document.getElementById("bankruptcyCancelBtn").addEventListener("click", () => {
 document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => {
   player.cash = BANKRUPTCY_CASH;
   player.holdings = {};
+  player.shortExpiry = {};
   bankruptcyModal.style.display = "none";
   renderItems();
   renderWallet();
@@ -1161,6 +1219,7 @@ function renderItems(){
           <span id="have-${it.id}">무포지션</span>
           <span id="eval-${it.id}"></span>
         </div>
+        <div class="expiry-line mono" id="expiry-${it.id}"></div>
         <div class="trade-row">
           <input type="number" min="1" value="1" id="qty-${it.id}">
           <button class="btn btn-buy" data-act="buy" data-id="${it.id}">매수</button>
@@ -1408,6 +1467,11 @@ async function startGame(){
     player.cash = Number(restored.cash) || STARTING_CASH;
     player.holdings = restored.holdings || {};
     player.jobLevel = Math.min(JOB_MAX_LEVEL, Math.max(1, Number(restored.jobLevel) || 1));
+    // 만기 시각 자체는 서버에 저장 안 하므로, 복구된 숏 포지션엔 새로 90초 타이머를 부여
+    player.shortExpiry = {};
+    for(const id in player.holdings){
+      if((player.holdings[id]||0) < 0) player.shortExpiry[id] = Date.now() + SHORT_MATURITY_MS;
+    }
   }
 
   document.getElementById("nameModal").style.display = "none";

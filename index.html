@@ -188,6 +188,11 @@
     margin-bottom:8px;
     font-family:'JetBrains Mono',monospace;
   }
+  .return-line{
+    font-size:10.5px;margin:-4px 0 8px;font-weight:700;min-height:0;
+  }
+  .return-line.up{color:var(--up);}
+  .return-line.down{color:var(--down);}
   .expiry-line{
     font-size:10.5px;color:var(--down);margin:-4px 0 8px;
     display:none;font-weight:700;
@@ -199,6 +204,16 @@
   }
   .margin-line.warn{color:var(--down);}
   .trade-row{display:flex;gap:6px;}
+  .trade-row-2{display:flex;gap:6px;margin-top:6px;}
+  .btn-mini{
+    flex:1;border:1px solid var(--line);border-radius:6px;
+    background:var(--ink-900);color:var(--cream-dim);
+    padding:6px 4px;font-size:10.5px;font-weight:700;
+    cursor:pointer;transition:filter .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .btn-mini:hover:not(:disabled){border-color:var(--gold);color:var(--gold-bright);}
+  .btn-mini:active:not(:disabled){transform:scale(.96);}
+  .btn-mini.hidden{display:none;}
   .trade-row input{
     width:48px;background:var(--ink-900);
     border:1px solid var(--line);border-radius:6px;
@@ -227,6 +242,22 @@
   .btn-sell{background:var(--down);color:#241009;}
   .btn:disabled{opacity:.35;cursor:not-allowed;}
   .btn:hover:not(:disabled){filter:brightness(1.12);}
+
+  /* ===== 계열 필터 ===== */
+  .sector-filter-row{
+    display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;
+  }
+  .sector-filter-btn{
+    padding:6px 14px;border-radius:20px;
+    background:var(--ink-800);border:1px solid var(--line);
+    color:var(--cream-dim);font-size:12px;font-weight:700;
+    cursor:pointer;transition:all .15s ease;
+  }
+  .sector-filter-btn:hover{border-color:var(--gold);color:var(--cream);}
+  .sector-filter-btn.active{
+    background:var(--gold);border-color:var(--gold);color:#1a1305;
+  }
+  .card.filtered-out{display:none;}
 
   /* ===== Leaderboard ===== */
   .board{
@@ -567,6 +598,7 @@
     <div class="label">평가 자산</div>
     <div class="value mono" id="totalValue">₩0</div>
     <div class="sub mono" id="cashValue">현금 ₩0</div>
+    <div class="sub mono" id="overallReturn"></div>
   </div>
 </header>
 
@@ -574,6 +606,13 @@
   <div>
     <h3 class="board-title">시세판</h3>
     <p class="board-sub">카드 우측 상단에서 <b>롱</b>(오를 것 같으면 매수/매도) / <b>숏</b>(내릴 것 같으면 숏/커버)을 골라 거래하세요</p>
+    <div class="sector-filter-row" id="sectorFilterRow">
+      <button class="sector-filter-btn active" data-sector="all">전체</button>
+      <button class="sector-filter-btn" data-sector="premium">프리미엄</button>
+      <button class="sector-filter-btn" data-sector="disease">질병</button>
+      <button class="sector-filter-btn" data-sector="pet">반려동물</button>
+      <button class="sector-filter-btn" data-sector="wild">야생</button>
+    </div>
     <div class="grid-items" id="itemsGrid"></div>
   </div>
 
@@ -600,7 +639,7 @@
 
     <div class="board rebirth-board">
       <h3 class="board-title" style="margin-bottom:10px;">환생 <span class="rebirth-badge" id="rebirthBadge">✨0회</span></h3>
-      <p class="board-sub" style="margin-bottom:14px;">총자산 <b id="rebirthThresholdText">5000만원</b>부터 환생할 수 있어요. 환생하면 자산은 초기화되지만, <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요.</p>
+      <p class="board-sub" style="margin-bottom:14px;">총자산 <b id="rebirthThresholdText">500만원</b>부터 환생할 수 있어요. 환생하면 자산은 초기화되지만, <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요.</p>
       <button id="rebirthBtn" class="rebirth-btn" disabled>환생하기</button>
     </div>
 
@@ -645,7 +684,17 @@
     <div class="patch-entry">
       <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
       <ul>
-        <li>✨ <b>환생</b> 시스템 추가 — 총자산 500만원부터 환생 가능, 환생하면 자산이 초기화되지만 <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요</li>
+        <li>🔍 시세판에 <b>계열 필터</b> 추가 — 프리미엄/질병/반려동물/야생 중 원하는 계열만 골라보기, <b>여러 계열 동시 선택</b> 가능</li>
+        <li>카드에 <b>전액매수</b> / <b>전량매도</b> 버튼 추가</li>
+        <li>보유 종목마다 평균 매입가 대비 <b>수익률</b> 표시, 상단에 <b>전체 수익률</b>(시작 자금 대비) 표시</li>
+        <li>환생 기본 비용 <b>5,000만원</b>으로 상향, 레버리지 부채 한도 <b>2배</b>, 숏 노출 한도 <b>3배</b>로 조정</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
+      <ul>
+        <li>✨ <b>환생</b> 시스템 추가 — 환생하면 자산이 초기화되지만 <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요</li>
         <li>리더보드에 환생 횟수(✨N)가 표시돼요</li>
         <li>📋 패치노트 버튼 추가 (지금 보고 있는 이 창이에요)</li>
       </ul>
@@ -704,7 +753,7 @@
       <p>매수할 때 수량 옆 드롭다운에서 <b>1x/2x/3x</b>를 고를 수 있어요. 2x 이상이면 실제 가격의 일부(증거금)만 내고 나머지는 빌려서 사는 거라, <b>오르면 이득도 배로, 내리면 손해도 배로</b> 커져요.</p>
       <ul>
         <li>레버리지 사용 시 증거금에 <b>추가 수수료 1%</b>가 더 붙어요</li>
-        <li>빌릴 수 있는 총 부채는 <b>총자산의 1.5배</b>까지만 허용돼요</li>
+        <li>빌릴 수 있는 총 부채는 <b>총자산의 2배</b>까지만 허용돼요</li>
         <li>포지션 가치 대비 <b>자기자본이 15% 밑으로 떨어지면 마진콜</b> — 그 순간 시장가로 강제 청산되고 빚부터 상환돼요. 카드에 부채/자기자본 비율이 표시되니 잘 보고 있어야 해요</li>
       </ul>
     </div>
@@ -716,7 +765,17 @@
 
     <div class="guide-section">
       <h3>✨ 환생</h3>
-      <p>총자산이 <b>500만원</b>을 넘으면 사이드바에서 환생할 수 있어요. 환생하면 현금·보유·부채가 전부 초기화되고 100,000원으로 다시 시작하지만, 대신 <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요. 여러 번 환생할수록 보너스가 쌓여서 다음 판이 점점 더 유리해지고, 대신 <b>다음 환생 기준 금액도 1.5배씩 늘어나요</b>(500만 → 750만 → 1,125만…). 리더보드에도 환생 횟수가 ✨N으로 표시돼요.</p>
+      <p>총자산이 <b>5,000만원</b>을 넘으면 사이드바에서 환생할 수 있어요. 환생하면 현금·보유·부채가 전부 초기화되고 100,000원으로 다시 시작하지만, 대신 <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요. 여러 번 환생할수록 보너스가 쌓여서 다음 판이 점점 더 유리해지고, 대신 <b>다음 환생 기준 금액도 1.5배씩 늘어나요</b>(5,000만 → 7,500만 → 1억 1,250만…). 리더보드에도 환생 횟수가 ✨N으로 표시돼요.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3>🔍 계열 필터 · 빠른 거래</h3>
+      <p>시세판 위쪽 필터 버튼(프리미엄/질병/반려동물/야생)으로 원하는 계열만 골라볼 수 있어요. <b>여러 개 동시에 선택</b>할 수도 있어요 (예: 프리미엄 + 질병 같이 보기). 각 카드 아래쪽엔 <b>전액매수</b>(가진 현금으로 최대한 매수)와 <b>전량매도</b>(보유한 만큼 전부 매도) 버튼도 있어요.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3>📈 수익률</h3>
+      <p>보유 중인 종목엔 카드에 평균 매입가 대비 <b>수익률</b>이 표시돼요. 화면 상단 평가 자산 밑에는 <b>전체 수익률</b>(시작 자금 100,000원 대비)도 항상 보여요.</p>
     </div>
 
     <div class="guide-section">
@@ -727,7 +786,7 @@
         <li><b>커버</b>: 숏 갚기 - 가격이 내려갔을 때 싸게 사서 청산 (많이 내린 뒤에 커버할수록 이득)</li>
         <li>반대로 가격이 오르면 손해를 볼 수 있어요 — 숏은 롱보다 위험 부담이 있는 대신 하락장에서도 돈을 벌 수 있는 방법이에요</li>
         <li>롱 보유 중엔 숏 불가, 숏 보유 중엔 롱 매수는 자동으로 커버부터 처리돼요</li>
-        <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 1.5배</b>까지만 숏 노출이 허용돼요</li>
+        <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 3배</b>까지만 숏 노출이 허용돼요</li>
         <li>숏은 <b>만기가 45초</b>예요. 진입/추가할 때마다 타이머가 45초로 갱신되고, 카드에 남은 시간이 표시돼요. 만기 지나면 그 순간 시장가로 <b>강제 청산</b>돼요 — 현금이 부족해도 강제로 집행되니 빚(마이너스 자산)이 생길 수 있어요, 그럴 땐 파산 신청을 쓰세요</li>
       </ul>
     </div>
@@ -756,7 +815,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-22"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
+const BUILD_VERSION = "v2026-07-13-23"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -797,7 +856,7 @@ const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
 const BANKRUPTCY_CASH = 50000; // 파산 신청 시 재지급되는 금액 (시작 자금보다 적은 페널티)
 
 /* ========================= 환생 ========================= */
-const REBIRTH_THRESHOLD = 50000000;      // 첫 환생 가능 최소 총자산 (5000만원)
+const REBIRTH_THRESHOLD = 50000000;      // 첫 환생 가능 최소 총자산 (5,000만원)
 const REBIRTH_THRESHOLD_GROWTH = 1.5;   // 환생할 때마다 다음 기준이 이 배율만큼 늘어남
 const REBIRTH_SELL_BONUS_PER_LEVEL = 0.05; // 환생 1회당 매도가 영구 보너스 +5%
 
@@ -848,7 +907,7 @@ const EVENT_TEMPLATES = [
 ];
 
 /* ========================= 상태 ========================= */
-let player = { name:"", password:"", cash:STARTING_CASH, holdings:{}, jobLevel:1, shortExpiry:{}, marginDebt:{}, rebirthCount:0 };
+let player = { name:"", password:"", cash:STARTING_CASH, holdings:{}, jobLevel:1, shortExpiry:{}, marginDebt:{}, rebirthCount:0, avgCost:{} };
 let cardMode = {}; // { itemId: 'long' | 'short' } 카드별 현재 거래 모드 (기본 롱)
 let jobEarnedTotal = 0;
 let lastJobClickAt = 0; // performance.now() 기준, 쿨다운 판정용 (버튼 disabled 조작에 대한 이중 방어)
@@ -1029,13 +1088,13 @@ function showEventBanner(msg){
 }
 
 /* ========================= 거래 ========================= */
-const SHORT_MARGIN_MULT = 3; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
+const SHORT_MARGIN_MULT = 3; // 총 자산 대비 숏 포지션 총 노출 한도
 const SHORT_FEE_RATE = 0.01;   // 숏 진입 시 수수료 1% - "찍고 바로 커버" 무위험 사이클에 마찰 추가
 const SHORT_MATURITY_MS = 45000; // 숏 포지션 만기 (45초) - 지나면 시장가로 강제 청산
 
 /* ========================= 레버리지 (롱 포지션) ========================= */
 const LEVERAGE_OPTIONS = [1, 2, 3]; // 선택 가능한 배율
-const LEVERAGE_MARGIN_MULT = 2;   // 총자산 대비 빌릴 수 있는 부채 총 한도 (숏 증거금 한도와 동일하게 맞춤)
+const LEVERAGE_MARGIN_MULT = 2;   // 총자산 대비 빌릴 수 있는 부채 총 한도
 const LEVERAGE_FEE_RATE = 0.01;     // 레버리지(2x 이상) 사용 시 증거금에 붙는 추가 수수료 1%
 const MAINTENANCE_MARGIN_RATIO = 0.15; // 포지션 가치 대비 자기자본 비율이 이 밑으로 떨어지면 마진콜(강제청산)
 const TRADE_FEE_RATE = 0.005; // 매수/매도(롱) 왕복 수수료 0.5%씩 - 숏의 마찰(수수료/증거금/만기)과 균형 맞춤
@@ -1095,10 +1154,18 @@ function buy(id, qty, leverage){
   const cashNeeded = Math.round(margin * (1 + feeRate));
   if(cashNeeded > player.cash) return flashCard(id,"insufficient");
 
+  const oldQty = player.holdings[id] || 0;
+  const oldAvgCost = player.avgCost[id] || 0;
+
   player.cash -= cashNeeded;
-  player.holdings[id] = (player.holdings[id]||0) + qty;
+  player.holdings[id] = oldQty + qty;
   if(borrowed > 0) player.marginDebt[id] = (player.marginDebt[id]||0) + borrowed;
   if(player.holdings[id] >= 0) delete player.shortExpiry[id];
+
+  // 평균 매입가 갱신 (가중평균) - 수익률 계산용
+  const newQty = player.holdings[id];
+  player.avgCost[id] = newQty > 0 ? ((oldAvgCost*oldQty) + (it.price*qty)) / newQty : 0;
+
   renderItems(); renderWallet();
   pushScore(); // 거래 즉시 서버에 반영 (안 그러면 바로 나갔을 때 매도/매수가 유실될 수 있음)
 }
@@ -1121,8 +1188,44 @@ function sell(id, qty){
     if(remain > 0) player.marginDebt[id] = remain; else delete player.marginDebt[id];
   }
   player.holdings[id] = have - qty;
+  if(player.holdings[id] <= 0) delete player.avgCost[id]; // 전량 청산 시 평균매입가 초기화
   renderItems(); renderWallet();
   pushScore();
+}
+
+// 지금 가진 현금(+증거금 한도)으로 이 품목을 몇 개까지 살 수 있는지 계산
+function maxAffordableQty(it, leverage){
+  const feeRate = TRADE_FEE_RATE + (leverage > 1 ? LEVERAGE_FEE_RATE : 0);
+  const costPerUnit = (it.price / leverage) * (1 + feeRate);
+  const qtyByCash = costPerUnit > 0 ? Math.floor(player.cash / costPerUnit) : 0;
+
+  let qtyByMargin = Infinity;
+  if(leverage > 1){
+    const otherDebt = totalMarginDebtExcluding(it.id);
+    const ownDebt = player.marginDebt[it.id] || 0;
+    const maxDebt = totalPortfolio() * LEVERAGE_MARGIN_MULT;
+    const room = Math.max(0, maxDebt - otherDebt - ownDebt);
+    const borrowedPerUnit = it.price * (1 - 1/leverage);
+    qtyByMargin = borrowedPerUnit > 0 ? Math.floor(room / borrowedPerUnit) : Infinity;
+  }
+  return Math.max(0, Math.min(qtyByCash, qtyByMargin));
+}
+
+// 전액매수: 현재 선택된 레버리지로 살 수 있는 최대 수량을 계산해서 매수
+function allInBuy(id){
+  const it = items.find(i=>i.id===id);
+  const levSelect = document.getElementById("lev-"+id);
+  const leverage = levSelect ? (parseInt(levSelect.value,10)||1) : 1;
+  const qty = maxAffordableQty(it, leverage);
+  if(qty <= 0) return flashCard(id, "insufficient");
+  buy(id, qty, leverage);
+}
+
+// 전량매도: 보유 중인 이 품목을 전부 매도
+function allOutSell(id){
+  const have = player.holdings[id] || 0;
+  if(have <= 0) return;
+  sell(id, have);
 }
 
 // 숏 진입/추가: 보유 중(롱)이면 막힘 - 먼저 매도로 롱 정리 후 숏 모드로 전환해야 함
@@ -1292,6 +1395,44 @@ function flashCard(id, mode){
 }
 
 // 카드의 롱/숏 모드에 따라 매수·매도 버튼의 라벨/동작(data-act)/활성화 여부를 갱신
+/* ========================= 계열 필터 (다중 선택 가능) ========================= */
+let activeSectorFilters = new Set(); // 비어있으면 전체 표시
+
+function toggleSectorFilter(sector){
+  if(sector === "all"){
+    activeSectorFilters.clear();
+  } else if(activeSectorFilters.has(sector)){
+    activeSectorFilters.delete(sector);
+  } else {
+    activeSectorFilters.add(sector);
+  }
+  renderSectorFilterUI();
+  applySectorFilterVisibility();
+}
+
+function renderSectorFilterUI(){
+  document.querySelectorAll(".sector-filter-btn").forEach(btn=>{
+    const s = btn.dataset.sector;
+    const active = s === "all" ? activeSectorFilters.size === 0 : activeSectorFilters.has(s);
+    btn.classList.toggle("active", active);
+  });
+}
+
+function applySectorFilterVisibility(){
+  for(const it of items){
+    const card = document.getElementById("card-"+it.id);
+    if(!card) continue;
+    const visible = activeSectorFilters.size === 0 || activeSectorFilters.has(it.sector);
+    card.classList.toggle("filtered-out", !visible);
+  }
+}
+
+document.getElementById("sectorFilterRow").addEventListener("click", (e) => {
+  const btn = e.target.closest(".sector-filter-btn");
+  if(!btn) return;
+  toggleSectorFilter(btn.dataset.sector);
+});
+
 function applyCardMode(it){
   const card = document.getElementById("card-"+it.id);
   if(!card) return;
@@ -1300,6 +1441,7 @@ function applyCardMode(it){
   const buyBtn = card.querySelector(".btn-buy");
   const sellBtn = card.querySelector(".btn-sell");
   const levSelect = document.getElementById("lev-"+it.id);
+  const tradeRow2 = document.getElementById("tradeRow2-"+it.id);
 
   card.querySelectorAll(".mode-btn").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
 
@@ -1311,6 +1453,7 @@ function applyCardMode(it){
     sellBtn.dataset.act = "short";
     sellBtn.disabled = have > 0;
     if(levSelect) levSelect.classList.add("hidden");
+    if(tradeRow2) tradeRow2.classList.add("hidden");
   } else {
     buyBtn.textContent = "매수";
     buyBtn.dataset.act = "buy";
@@ -1319,6 +1462,7 @@ function applyCardMode(it){
     sellBtn.dataset.act = "sell";
     sellBtn.disabled = have <= 0;
     if(levSelect) levSelect.classList.remove("hidden");
+    if(tradeRow2) tradeRow2.classList.remove("hidden");
   }
 }
 
@@ -1455,6 +1599,7 @@ document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => 
   player.holdings = {};
   player.shortExpiry = {};
   player.marginDebt = {};
+  player.avgCost = {};
   bankruptcyModal.style.display = "none";
   renderItems();
   renderWallet();
@@ -1483,6 +1628,7 @@ document.getElementById("rebirthConfirmBtn").addEventListener("click", () => {
   player.holdings = {};
   player.shortExpiry = {};
   player.marginDebt = {};
+  player.avgCost = {};
   rebirthModal.style.display = "none";
   renderItems();
   renderWallet();
@@ -1496,8 +1642,15 @@ rebirthModal.addEventListener("click", (e) => {
 
 /* ========================= 렌더링 ========================= */
 function renderWallet(){
-  document.getElementById("totalValue").textContent = won(totalPortfolio());
+  const total = totalPortfolio();
+  document.getElementById("totalValue").textContent = won(total);
   document.getElementById("cashValue").textContent = "현금 " + won(player.cash);
+
+  const overallReturnPct = ((total - STARTING_CASH) / STARTING_CASH) * 100;
+  const returnEl = document.getElementById("overallReturn");
+  returnEl.textContent = `전체 수익률 ${overallReturnPct>=0?"+":""}${overallReturnPct.toFixed(1)}%`;
+  returnEl.style.color = overallReturnPct >= 0 ? "var(--up)" : "var(--down)";
+
   const bankruptcyBtn = document.getElementById("bankruptcyBtn");
   if(bankruptcyBtn) bankruptcyBtn.disabled = totalPortfolio() >= 0;
   renderJobPanel();
@@ -1566,6 +1719,7 @@ function renderItems(){
           <span id="have-${it.id}">무포지션</span>
           <span id="eval-${it.id}"></span>
         </div>
+        <div class="return-line mono" id="return-${it.id}"></div>
         <div class="expiry-line mono" id="expiry-${it.id}"></div>
         <div class="margin-line mono" id="margin-${it.id}"></div>
         <div class="trade-row">
@@ -1577,6 +1731,10 @@ function renderItems(){
           </select>
           <button class="btn btn-buy" data-act="buy" data-id="${it.id}">매수</button>
           <button class="btn btn-sell" data-act="sell" data-id="${it.id}">매도</button>
+        </div>
+        <div class="trade-row-2" id="tradeRow2-${it.id}">
+          <button class="btn-mini" data-act="allin" data-id="${it.id}">전액매수</button>
+          <button class="btn-mini" data-act="allout" data-id="${it.id}">전량매도</button>
         </div>
       `;
       grid.appendChild(card);
@@ -1591,6 +1749,18 @@ function renderItems(){
     document.getElementById("have-"+it.id).textContent = haveText;
     document.getElementById("eval-"+it.id).textContent = have ? won(have*it.price) : "";
 
+    // 보유 중인 롱 포지션의 수익률 (평균 매입가 대비)
+    const returnEl = document.getElementById("return-"+it.id);
+    const avgCost = player.avgCost[it.id] || 0;
+    if(have > 0 && avgCost > 0){
+      const returnPct = (it.price - avgCost) / avgCost * 100;
+      returnEl.textContent = `수익률 ${returnPct>=0?"+":""}${returnPct.toFixed(1)}% (평균매입 ${won(avgCost)})`;
+      returnEl.className = "return-line mono " + (returnPct >= 0 ? "up" : "down");
+    } else {
+      returnEl.textContent = "";
+      returnEl.className = "return-line mono";
+    }
+
     applyCardMode(it);
 
     if(it._eventFlash){
@@ -1602,6 +1772,8 @@ function renderItems(){
 
     drawSpark(document.getElementById("spark-"+it.id), it.history, dirColor);
   });
+
+  applySectorFilterVisibility();
 }
 
 function renderTicker(){
@@ -1765,6 +1937,8 @@ document.getElementById("itemsGrid").addEventListener("click", e=>{
   else if(act === "sell") sell(id, qty);
   else if(act === "short") shortSell(id, qty);
   else if(act === "cover") coverShort(id, qty);
+  else if(act === "allin") allInBuy(id);
+  else if(act === "allout") allOutSell(id);
 });
 
 document.getElementById("startBtn").addEventListener("click", startGame);
@@ -1832,6 +2006,14 @@ async function startGame(){
     player.jobLevel = Math.min(JOB_MAX_LEVEL, Math.max(1, Number(restored.jobLevel) || 1));
     player.marginDebt = restored.marginDebt || {};
     player.rebirthCount = Math.max(0, Math.round(Number(restored.rebirthCount) || 0));
+    // 평균 매입가는 서버에 저장 안 하므로, 복구된 롱 포지션은 현재가를 매입가로 임시 설정 (수익률 0%부터 시작)
+    player.avgCost = {};
+    for(const id in player.holdings){
+      if((player.holdings[id]||0) > 0){
+        const it = items.find(i=>i.id===id);
+        if(it) player.avgCost[id] = it.price;
+      }
+    }
     // 만기 시각 자체는 서버에 저장 안 하므로, 복구된 숏 포지션엔 새로 45초 타이머를 부여
     player.shortExpiry = {};
     for(const id in player.holdings){

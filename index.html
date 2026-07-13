@@ -290,6 +290,56 @@
     z-index:300;backdrop-filter:blur(3px);
   }
   #maintenanceOverlay{ z-index:400; } /* 점검 오버레이는 입장 모달보다 항상 위에 뜨도록 */
+
+  /* ===== 가이드 ===== */
+  .guide-fab{
+    position:fixed;right:22px;bottom:22px;
+    width:46px;height:46px;border-radius:50%;
+    background:var(--gold);color:#1a1305;
+    border:none;font-family:'Gowun Batang',serif;font-size:22px;font-weight:700;
+    cursor:pointer;box-shadow:var(--shadow);
+    z-index:350;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .15s ease, filter .15s ease;
+  }
+  .guide-fab:hover{transform:scale(1.08);filter:brightness(1.08);}
+
+  #guideModal{ z-index:360; align-items:flex-start; padding:40px 16px; overflow-y:auto; }
+  .guide-card{
+    background:linear-gradient(180deg,var(--ink-700),var(--ink-800));
+    border:1px solid var(--gold);
+    border-radius:14px;
+    padding:32px 30px;
+    width:min(600px,92vw);
+    box-shadow:var(--shadow);
+    position:relative;
+    margin:auto;
+  }
+  .guide-card h2{font-family:'Gowun Batang',serif;font-size:25px;margin:8px 0 4px;color:var(--cream);}
+  .guide-close{
+    position:absolute;top:16px;right:16px;
+    width:30px;height:30px;border-radius:50%;
+    background:var(--ink-900);border:1px solid var(--line);
+    color:var(--cream-dim);font-size:15px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .guide-close:hover{color:var(--cream);border-color:var(--gold);}
+  .guide-section{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);}
+  .guide-section:first-of-type{border-top:none;margin-top:20px;padding-top:0;}
+  .guide-section h3{
+    font-size:14.5px;color:var(--gold-bright);margin:0 0 8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .guide-section p{font-size:13px;color:var(--cream-dim);line-height:1.7;margin:0 0 8px;}
+  .guide-section ul{margin:0 0 4px;padding-left:18px;}
+  .guide-section li{font-size:13px;color:var(--cream-dim);line-height:1.7;margin-bottom:4px;}
+  .guide-section b{color:var(--cream);}
+  .guide-tag{
+    display:inline-block;padding:2px 9px;border-radius:10px;
+    font-size:11px;font-weight:800;
+  }
+  .guide-tag.long{background:rgba(95,191,133,.18);color:var(--up);}
+  .guide-tag.short{background:rgba(212,85,63,.18);color:var(--down);}
   .modal-card{
     background:linear-gradient(180deg,var(--ink-700),var(--ink-800));
     border:1px solid var(--gold);
@@ -399,6 +449,57 @@
       <h3 class="board-title" style="margin-bottom:14px;">실시간 순위</h3>
       <div id="leaderboardList"><div class="lb-empty">불러오는 중...</div></div>
       <div class="lb-status" id="lbStatus">연결 대기 중</div>
+    </div>
+  </div>
+</div>
+
+<button id="guideBtn" class="guide-fab" aria-label="가이드 보기" title="가이드 보기">ⓘ</button>
+
+<div id="guideModal" class="full-overlay" style="display:none;">
+  <div class="guide-card">
+    <button class="guide-close" id="guideClose" aria-label="닫기">✕</button>
+    <div class="eyebrow">Donkatsu Exchange</div>
+    <h2>돈까스거래소 가이드</h2>
+    <p style="font-size:13px;color:var(--cream-dim);margin:0;">돈까스 가격을 예측해서 자산을 불려보세요. 아래 기능들을 알아두면 훨씬 유리해요.</p>
+
+    <div class="guide-section">
+      <h3>📈 시세판</h3>
+      <p>돈까스마다 가격이 3초마다 조금씩 오르내려요. 카드 안의 꺾은선이 최근 가격 흐름이고, 가끔 <b>돈까스 속보</b> 배너와 함께 특정 품목 가격이 크게 뛰거나 폭락하는 <b>이벤트</b>가 발생해요.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag long">롱</span> 오를 것 같을 때</h3>
+      <p>가격이 <b>오를 것 같으면</b> 롱 모드에서 <b>매수</b>로 미리 사두세요. 실제로 가격이 오르면 <b>매도</b>로 팔아서 차익을 남겨요.</p>
+      <ul>
+        <li><b>매수</b>: 지금 가격으로 사서 보유량을 늘림 (현금 감소)</li>
+        <li><b>매도</b>: 보유한 만큼 팔아서 현금으로 바꿈 (많이 오른 뒤에 팔수록 이득)</li>
+      </ul>
+    </div>
+
+    <div class="guide-section">
+      <h3><span class="guide-tag short">숏</span> 내릴 것 같을 때</h3>
+      <p>가격이 <b>내릴 것 같으면</b> 숏 모드로 바꾸고 <b>숏</b>을 눌러보세요. 지금 갖고 있지 않은 돈까스를 먼저 "빌려서 판다"고 생각하면 돼요 — 판 값이 먼저 현금으로 들어오고, 나중에 <b>커버</b>로 다시 사서 갚아요. 그 사이 가격이 <b>내려갈수록</b> 이득이에요.</p>
+      <ul>
+        <li><b>숏</b>: 지금 가격에 미리 팔아둠 (현금 증가, 대신 "빚"처럼 마이너스 보유가 생김)</li>
+        <li><b>커버</b>: 숏 갚기 - 가격이 내려갔을 때 싸게 사서 청산 (많이 내린 뒤에 커버할수록 이득)</li>
+        <li>반대로 가격이 오르면 손해를 볼 수 있어요 — 숏은 롱보다 위험 부담이 있는 대신 하락장에서도 돈을 벌 수 있는 방법이에요</li>
+        <li>롱 보유 중엔 숏 불가, 숏 보유 중엔 롱 매수는 자동으로 커버부터 처리돼요</li>
+      </ul>
+    </div>
+
+    <div class="guide-section">
+      <h3>🍽️ 알바</h3>
+      <p>시세가 안 움직여서 심심할 때, 사이드바의 알바 버튼을 눌러보세요. 클릭 한 번에 300~700원을 랜덤으로 벌 수 있어요. 다만 <b>0.5초 쿨다운</b>이 있어서 너무 빠르게 연타는 안 돼요.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3>🏆 실시간 순위</h3>
+      <p>순위는 <b>평가 자산</b>(현금 + 보유·숏 포지션 평가액) 기준이에요. 화면 상단의 "평가 자산" 숫자가 바로 그 값이고, 이게 리더보드 점수예요.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3>🔑 계정</h3>
+      <p>처음 입장할 때 정한 이름+비밀번호가 곧 내 계정이에요. 같은 이름+비밀번호로 다시 들어오면 이전 자산 그대로 이어서 할 수 있어요. 비밀번호가 틀리면 못 들어가니 잘 기억해두세요.</p>
     </div>
   </div>
 </div>
@@ -731,6 +832,21 @@ function runJobCooldownUI(){
 }
 
 document.getElementById("jobBtn").addEventListener("click", doJob);
+
+/* ========================= 가이드 ========================= */
+const guideModal = document.getElementById("guideModal");
+document.getElementById("guideBtn").addEventListener("click", () => {
+  guideModal.style.display = "flex";
+});
+document.getElementById("guideClose").addEventListener("click", () => {
+  guideModal.style.display = "none";
+});
+guideModal.addEventListener("click", (e) => {
+  if(e.target === guideModal) guideModal.style.display = "none"; // 바깥 배경 클릭 시 닫힘
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape" && guideModal.style.display === "flex") guideModal.style.display = "none";
+});
 
 /* ========================= 렌더링 ========================= */
 function renderWallet(){

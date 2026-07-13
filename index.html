@@ -546,6 +546,7 @@
         <li><b>커버</b>: 숏 갚기 - 가격이 내려갔을 때 싸게 사서 청산 (많이 내린 뒤에 커버할수록 이득)</li>
         <li>반대로 가격이 오르면 손해를 볼 수 있어요 — 숏은 롱보다 위험 부담이 있는 대신 하락장에서도 돈을 벌 수 있는 방법이에요</li>
         <li>롱 보유 중엔 숏 불가, 숏 보유 중엔 롱 매수는 자동으로 커버부터 처리돼요</li>
+        <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 1.5배</b>까지만 숏 노출이 허용돼요</li>
       </ul>
     </div>
 
@@ -612,8 +613,8 @@ const SECTOR_WEIGHT = 1 / Math.sqrt(3);
 const IDIO_WEIGHT   = 1 / Math.sqrt(3);
 
 // 매수/매도가 가격에 주는 즉각적인 충격 (내 화면 기준, 시간 지나면 서서히 사라짐)
-const IMPACT_PER_UNIT = 0.004; // 1개 거래당 ±0.4% (Code.gs와 동일하게 맞춰야 함)
-const IMPACT_MAX = 0.18;       // 최대 ±18%까지만 왜곡 (Code.gs와 동일하게 맞춰야 함)
+const IMPACT_PER_UNIT = 0.0025; // 1개 거래당 ±0.25% (Code.gs와 동일하게 맞춰야 함)
+const IMPACT_MAX = 0.07;        // 최대 ±7%까지만 왜곡 (Code.gs와 동일하게 맞춰야 함) - "몰려서 찍어누르기" 방지용으로 축소
 const IMPACT_POLL_MS = 800;    // 서버의 시장 충격 상태를 얼마나 자주 확인할지 (완전 동시는 아니지만 최대한 짧게)
 
 const EVENT_TEMPLATES = [
@@ -789,7 +790,8 @@ function showEventBanner(msg){
 }
 
 /* ========================= 거래 ========================= */
-const SHORT_MARGIN_MULT = 3; // 총 자산 대비 숏 포지션 총 노출 한도 (증거금 없는 무한 숏 방지)
+const SHORT_MARGIN_MULT = 1.5; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
+const SHORT_FEE_RATE = 0.01;   // 숏 진입 시 수수료 1% - "찍고 바로 커버" 무위험 사이클에 마찰 추가
 
 function currentShortExposure(excludeId){
   let exp = 0;
@@ -912,7 +914,9 @@ function shortSell(id, qty){
   if(maxAddQty <= 0) return flashCard(id, "margin");
   qty = Math.min(qty, maxAddQty);
 
-  player.cash += it.price * qty;
+  const grossProceeds = it.price * qty;
+  const fee = Math.round(grossProceeds * SHORT_FEE_RATE);
+  player.cash += grossProceeds - fee; // 진입 수수료만큼 덜 받음
   player.holdings[id] = have - qty;
   applyImpact(it, -1, qty);
   renderItems(); renderWallet();

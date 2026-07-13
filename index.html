@@ -283,11 +283,13 @@
   #eventBanner .msg{font-size:14px;color:var(--cream);}
 
   /* ===== Name modal ===== */
-  #nameModal{
+  /* ===== 이름 입장 모달 / 점검 오버레이 (공통) ===== */
+  .full-overlay{
     position:fixed;inset:0;background:rgba(4,10,7,.86);
     display:flex;align-items:center;justify-content:center;
     z-index:300;backdrop-filter:blur(3px);
   }
+  #maintenanceOverlay{ z-index:400; } /* 점검 오버레이는 입장 모달보다 항상 위에 뜨도록 */
   .modal-card{
     background:linear-gradient(180deg,var(--ink-700),var(--ink-800));
     border:1px solid var(--gold);
@@ -332,7 +334,7 @@
 </head>
 <body>
 
-<div id="nameModal">
+<div id="nameModal" class="full-overlay">
   <div class="modal-card">
     <div class="eyebrow">Donkatsu Exchange</div>
     <h2>돈까스거래소 입장</h2>
@@ -342,6 +344,14 @@
     <div class="modal-error" id="nameError"></div>
     <button id="startBtn">입장하기</button>
     <div class="starting">기초 자금 100,000원 지급</div>
+  </div>
+</div>
+
+<div id="maintenanceOverlay" class="full-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="eyebrow">Donkatsu Exchange</div>
+    <h2>⚙️ 서버 점검 중</h2>
+    <p id="maintenanceMsg">서버 점검 중입니다. 잠시 후 다시 접속해주세요.</p>
   </div>
 </div>
 
@@ -408,8 +418,9 @@ const LB_POLL_MS = 5000;       // 리더보드 갱신 주기
 const HISTORY_LEN = 30;
 
 const JOB_COOLDOWN_MS = 500;   // 알바 버튼 쿨다운 (매크로/연타 방지)
-const JOB_MIN_EARN = 100;
-const JOB_MAX_EARN = 200;
+const JOB_MIN_EARN = 300;
+const JOB_MAX_EARN = 700;
+const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
 
 const ITEM_DEFS = [
   { id:"yanghojae", name:"양호재의 초울트라 레전드 양호재급 돈까스", emoji:"🏆", price:22000, vol:0.030 },
@@ -440,6 +451,7 @@ let player = { name:"", password:"", cash:STARTING_CASH, holdings:{} };
 let cardMode = {}; // { itemId: 'long' | 'short' } 카드별 현재 거래 모드 (기본 롱)
 let jobEarnedTotal = 0;
 let lastJobClickAt = 0; // performance.now() 기준, 쿨다운 판정용 (버튼 disabled 조작에 대한 이중 방어)
+let inMaintenance = false;
 let items = ITEM_DEFS.map(d => ({
   ...d,
   prevPrice:d.price,
@@ -840,6 +852,10 @@ async function pushScore(){
       })
     });
     const data = await res.json();
+    if(!data.ok && data.error === "maintenance"){
+      showMaintenanceOverlay(data.message);
+      return;
+    }
     if(!data.ok && data.error === "not_found" && !resetNoticeShown){
       resetNoticeShown = true;
       showEventBanner("관리자가 게임을 초기화했어요. 3초 후 재입장 화면으로 돌아갑니다");
@@ -887,6 +903,46 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
+/* ========================= 점검 모드 ========================= */
+async function checkMaintenance(){
+  if(!APPS_SCRIPT_URL) return { on:false };
+  try{
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=status`);
+    const data = await res.json();
+    return { on: !!data.maintenance, message: data.message || "서버 점검 중입니다. 잠시 후 다시 접속해주세요." };
+  }catch(e){
+    return { on:false }; // 상태 확인 자체가 실패하면 막지 않고 그냥 진행
+  }
+}
+
+function showMaintenanceOverlay(message){
+  inMaintenance = true;
+  document.getElementById("maintenanceMsg").textContent = message || "서버 점검 중입니다. 잠시 후 다시 접속해주세요.";
+  document.getElementById("maintenanceOverlay").style.display = "flex";
+}
+
+let maintenanceCheckedOnce = false; // 페이지가 로드된 이후 첫 확인인지 구분 (첫 확인이면 새로고침할 필요 없음)
+
+async function pollMaintenance(){
+  const state = await checkMaintenance();
+  const alreadyChecked = maintenanceCheckedOnce;
+  maintenanceCheckedOnce = true;
+
+  if(state.on && !inMaintenance){
+    showMaintenanceOverlay(state.message);
+    if(alreadyChecked){
+      // 이미 접속해서 플레이 중이던 사람 -> 문구 잠깐 보여준 뒤 강제로 새로고침시켜서 완전히 재접속시킴
+      setTimeout(()=> location.reload(), 1500);
+    }
+  } else if(!state.on && inMaintenance){
+    // 점검 종료 -> 새로고침해서 완전히 재접속 (그 사이 새 index.html을 올려놨다면 최신 버전으로 자동 전환됨)
+    location.reload();
+  }
+}
+
+pollMaintenance(); // 페이지 로드 즉시 1회 확인 (입장 모달 뜨기 전에도 점검이면 바로 덮임)
+setInterval(pollMaintenance, MAINTENANCE_POLL_MS);
+
 /* ========================= 이벤트 바인딩 ========================= */
 document.getElementById("itemsGrid").addEventListener("click", e=>{
   const modeBtn = e.target.closest("button.mode-btn");
@@ -927,6 +983,7 @@ async function startGame(){
 
   if(!name){ input.focus(); input.style.borderColor="var(--down)"; errEl.textContent="이름을 입력해주세요"; return; }
   if(!password){ pwInput.focus(); pwInput.style.borderColor="var(--down)"; errEl.textContent="비밀번호를 입력해주세요"; return; }
+  if(inMaintenance){ errEl.textContent = "서버 점검 중이에요. 점검이 끝난 뒤 다시 시도해주세요"; return; }
   input.style.borderColor = "";
   pwInput.style.borderColor = "";
 
@@ -944,6 +1001,12 @@ async function startGame(){
       });
       const data = await res.json();
       if(!data.ok){
+        if(data.error === "maintenance"){
+          showMaintenanceOverlay(data.message);
+          btn.disabled = false;
+          btn.textContent = "입장하기";
+          return;
+        }
         errEl.textContent = data.error === "wrong_password"
           ? "비밀번호가 틀렸어요"
           : "입장에 실패했어요. 다시 시도해주세요";

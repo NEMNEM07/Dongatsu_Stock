@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>돈까스거래소</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -567,15 +570,17 @@
   </div>
 </div>
 
-<footer>돈가스 가격은 실시간으로 변동합니다 · 모든 거래는 시뮬레이션입니다</footer>
+<footer>돈가스 가격은 실시간으로 변동합니다 · 모든 거래는 시뮬레이션입니다 · <span id="buildVersion"></span></footer>
 
 <script>
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
+const BUILD_VERSION = "v2026-07-13-10"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
+document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
-const EVENT_PROB = 0.25;        // 틱마다 이벤트가 발생할 확률 (평균 ~3.3틱=10초 간격)
+const EVENT_PROB = 0.3;        // 틱마다 이벤트가 발생할 확률 (평균 ~3.3틱=10초 간격)
 const EPOCH = Date.UTC(2026, 6, 13, 0, 0, 0); // 모든 클라이언트가 공유하는 기준 시각 (배포 전 오늘 날짜로 맞춰두면 됨)
 const STARTING_CASH = 100000;
 const LB_POLL_MS = 5000;       // 리더보드 갱신 주기

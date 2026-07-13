@@ -371,42 +371,20 @@
   .lottery-buy-btn:hover:not(:disabled){filter:brightness(1.08);}
   .lottery-buy-btn:active:not(:disabled){transform:scale(.97);}
   .lottery-buy-btn:disabled{background:var(--ink-900);color:var(--cream-dim);cursor:not-allowed;}
-  .lottery-scratch-area{
-    margin-top:12px;text-align:center;
-    background:var(--ink-900);border:1px solid var(--line);border-radius:10px;
-    padding:16px 10px;
+
+  .lottery-modal-card{ text-align:center; }
+  .lottery-modal-desc{font-size:12.5px;color:var(--cream-dim);margin:0 0 16px;}
+  .scratch-canvas{
+    width:100%;max-width:300px;height:150px;
+    border-radius:10px;border:1px solid var(--line);
+    cursor:pointer;touch-action:none;
+    display:block;margin:0 auto 12px;
   }
-  .lottery-card{
-    font-size:32px;margin-bottom:10px;min-height:40px;
-    display:flex;align-items:center;justify-content:center;
-    transition:transform .15s ease;
+  #scratchAllBtn{ margin-top:0; }
+  .lottery-modal-result{
+    margin-top:12px;font-size:14px;min-height:20px;color:var(--cream-dim);
   }
-  .lottery-card.scratching{animation:scratchShake .12s linear infinite;}
-  .lottery-card.win{color:var(--up);animation:winPop .5s ease;}
-  .lottery-card.big-win{color:var(--gold-bright);animation:winPop .6s ease infinite alternate;text-shadow:0 0 16px rgba(230,195,79,.7);}
-  .lottery-card.lose{color:var(--cream-dim);}
-  @keyframes scratchShake{
-    0%{transform:translateX(-2px) rotate(-2deg);}
-    50%{transform:translateX(2px) rotate(2deg);}
-    100%{transform:translateX(-2px) rotate(-2deg);}
-  }
-  @keyframes winPop{
-    0%{transform:scale(.8);}
-    60%{transform:scale(1.15);}
-    100%{transform:scale(1);}
-  }
-  .lottery-scratch-btn{
-    width:100%;padding:10px;border:none;border-radius:8px;
-    background:var(--gold);color:#1a1305;font-weight:800;font-size:13px;
-    cursor:pointer;
-  }
-  .lottery-scratch-btn:hover:not(:disabled){filter:brightness(1.08);}
-  .lottery-scratch-btn:disabled{background:var(--ink-800);color:var(--cream-dim);cursor:not-allowed;}
-  .lottery-result{
-    margin-top:10px;font-size:12px;text-align:center;color:var(--cream-dim);
-    min-height:14px;
-  }
-  .lottery-result b{color:var(--gold-bright);}
+  .lottery-modal-result b{color:var(--gold-bright);}
   .modal-card button.secondary{
     background:transparent;border:1px solid var(--line);
     color:var(--cream-dim);margin-top:10px;
@@ -798,11 +776,6 @@
         <option value="100000000">100,000,000원권</option>
       </select>
       <button id="lotteryBuyBtn" class="lottery-buy-btn">복권 구매하기</button>
-      <div id="lotteryScratchArea" class="lottery-scratch-area" style="display:none;">
-        <div class="lottery-card" id="lotteryCard">🎫</div>
-        <button id="lotteryScratchBtn" class="lottery-scratch-btn">긁기!</button>
-      </div>
-      <div id="lotteryResult" class="lottery-result"></div>
     </div>
 
     <div class="board">
@@ -830,6 +803,18 @@
     <p>현금·보유·부채가 전부 초기화되고 <b>100,000원</b>으로 다시 시작해요. 대신 매도가 보너스가 <b id="rebirthNextBonus"></b>로 영구히 올라가요. 정말 환생할까요?</p>
     <button id="rebirthConfirmBtn" class="danger">환생하기</button>
     <button id="rebirthCancelBtn" class="secondary">취소</button>
+  </div>
+</div>
+
+<div id="lotteryScratchModal" class="full-overlay" style="display:none;">
+  <div class="modal-card lottery-modal-card">
+    <div class="eyebrow">Donkatsu Exchange</div>
+    <h2>🎫 복권 긁기</h2>
+    <p class="lottery-modal-desc">마우스나 손가락으로 문질러서 긁어보세요! (80% 이상 지우면 자동 공개)</p>
+    <canvas id="scratchCanvas" width="300" height="150" class="scratch-canvas"></canvas>
+    <button id="scratchAllBtn" class="secondary">다 긁기</button>
+    <div id="lotteryModalResult" class="lottery-modal-result"></div>
+    <button id="lotteryModalCloseBtn" class="danger" style="display:none;">닫기</button>
   </div>
 </div>
 
@@ -1046,7 +1031,8 @@
 
     <div class="guide-section">
       <h3>🎫 복권</h3>
-      <p>1만/10만/100만/1천만/1억원권 중 골라 구매하면 즉시 등수가 정해지고, <b>"긁기!"</b> 버튼으로 결과를 확인해요. 1등은 구매가의 <b>500배</b>지만 확률이 100만분의 1로 극악이에요. 평균적으로는 손해가 나게 설계돼있어요 (실제 복권처럼요) — 재미로만 즐기세요.</p>
+      <p>1만/10만/100만/1천만/1억원권 중 골라 구매하면 화면 가운데에 복권이 뜨고, 마우스나 손가락으로 문질러서 <b>은박을 긁어</b> 결과를 확인해요 (80% 이상 지우면 자동 공개). 1등은 구매가의 <b>500배</b>지만 확률이 100만분의 1로 극악이에요. 평균적으로는 손해가 나게 설계돼있어요 (실제 복권처럼요) — 재미로만 즐기세요.</p>
+      <p>👆 성격 급하면 "다 긁기" 버튼으로 바로 결과 볼 수 있어요.</p>
     </div>
 
     <div class="guide-section">
@@ -1072,7 +1058,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-28";
+const BUILD_VERSION = "v2026-07-13-29";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1873,7 +1859,7 @@ function renderFundPanel(){
 
 setInterval(()=>{ checkFundResolutions(); renderFundPanel(); }, 1000);
 
-/* ========================= 복권 ========================= */
+/* ========================= 복권 (캔버스 긁기) ========================= */
 // 등수별 확률/배당 - 실제 복권처럼 1등은 극악확률, 전체 기대값(EV)은 약 44%(=평균적으로 손해)
 const LOTTERY_TIERS = [
   { name:"1등", mult:500, prob:1/1000000 },
@@ -1883,7 +1869,12 @@ const LOTTERY_TIERS = [
   { name:"5등", mult:1,   prob:0.26 },
   { name:"6등", mult:0.4, prob:0.40 },
 ];
+const SCRATCH_REVEAL_RATIO = 0.8; // 80% 이상 지우면 자동 공개
 let pendingLottery = null; // { price, tier, payout }
+let scratchRevealed = false;
+let isScratchingNow = false;
+let lastScratchPoint = null;
+let scratchMoveCount = 0;
 
 function drawLotteryTier(){
   const roll = Math.random();
@@ -1895,8 +1886,11 @@ function drawLotteryTier(){
   return null; // 꽝
 }
 
+const lotteryScratchModal = document.getElementById("lotteryScratchModal");
+const scratchCanvas = document.getElementById("scratchCanvas");
+const scratchCtx = scratchCanvas.getContext("2d");
+
 function buyLottery(){
-  if(pendingLottery){ showEventBanner("🎫 먼저 긁어서 결과를 확인해주세요"); return; }
   const price = parseInt(document.getElementById("lotteryPriceSelect").value, 10) || 0;
   if(price > player.cash){ showEventBanner("💸 복권 살 돈이 부족해요"); return; }
 
@@ -1904,51 +1898,156 @@ function buyLottery(){
   const tier = drawLotteryTier();
   const payout = tier ? Math.round(price * tier.mult) : 0;
   pendingLottery = { price, tier, payout };
-
-  document.getElementById("lotteryBuyBtn").disabled = true;
-  document.getElementById("lotteryResult").textContent = "";
-  const area = document.getElementById("lotteryScratchArea");
-  const card = document.getElementById("lotteryCard");
-  card.className = "lottery-card";
-  card.textContent = "🎫";
-  area.style.display = "block";
-  document.getElementById("lotteryScratchBtn").disabled = false;
+  scratchRevealed = false;
+  lastScratchPoint = null;
+  scratchMoveCount = 0;
 
   renderWallet();
   pushScore();
+
+  document.getElementById("lotteryModalResult").innerHTML = "";
+  document.getElementById("lotteryModalCloseBtn").style.display = "none";
+  document.getElementById("scratchAllBtn").style.display = "block";
+  lotteryScratchModal.style.display = "flex";
+  drawResultContent();
+  drawFoilLayer();
 }
 
-function scratchLottery(){
-  if(!pendingLottery) return;
-  const scratchBtn = document.getElementById("lotteryScratchBtn");
-  scratchBtn.disabled = true;
-  const card = document.getElementById("lotteryCard");
-  card.className = "lottery-card scratching";
-  card.textContent = "긁는 중...";
+// 캔버스 바탕에 실제 당첨 결과를 미리 그려둠 (은박 밑에 숨어있는 내용)
+function drawResultContent(){
+  const w = scratchCanvas.width, h = scratchCanvas.height;
+  scratchCtx.globalCompositeOperation = "source-over";
+  scratchCtx.clearRect(0, 0, w, h);
+  scratchCtx.fillStyle = "#12261d";
+  scratchCtx.fillRect(0, 0, w, h);
+  scratchCtx.textAlign = "center";
+  scratchCtx.textBaseline = "middle";
 
-  setTimeout(()=>{
-    const { price, tier, payout } = pendingLottery;
-    if(tier){
-      player.cash += payout;
-      card.className = "lottery-card " + (tier.mult >= 10 ? "big-win" : "win");
-      card.textContent = tier.mult >= 10 ? "🎉💰🎉" : "🎊";
-      document.getElementById("lotteryResult").innerHTML = `<b>${tier.name} 당첨!</b> ${won(payout)} 획득 (x${tier.mult})`;
-      showEventBanner(`🎫 복권 ${tier.name} 당첨! ${won(payout)} 획득했어요`);
-    } else {
-      card.className = "lottery-card lose";
-      card.textContent = "😭 꽝";
-      document.getElementById("lotteryResult").textContent = `꽝... ${won(price)} 날아갔어요`;
-    }
-    renderWallet();
-    pushScore();
-    pendingLottery = null;
-    document.getElementById("lotteryBuyBtn").disabled = false;
-    setTimeout(()=>{ document.getElementById("lotteryScratchArea").style.display = "none"; }, 3000);
-  }, 1200);
+  const { tier, payout } = pendingLottery;
+  if(tier){
+    scratchCtx.fillStyle = tier.mult >= 10 ? "#e6c34f" : "#5fbf85";
+    scratchCtx.font = "bold 22px 'Noto Sans KR', sans-serif";
+    scratchCtx.fillText(`${tier.name} 당첨!`, w/2, h/2 - 18);
+    scratchCtx.font = "bold 17px 'JetBrains Mono', monospace";
+    scratchCtx.fillText(won(payout), w/2, h/2 + 14);
+  } else {
+    scratchCtx.fillStyle = "#a9b6ac";
+    scratchCtx.font = "bold 24px 'Noto Sans KR', sans-serif";
+    scratchCtx.fillText("꽝 😭", w/2, h/2);
+  }
 }
+
+// 그 위를 덮는 은박(긁는 면)
+function drawFoilLayer(){
+  const w = scratchCanvas.width, h = scratchCanvas.height;
+  scratchCtx.globalCompositeOperation = "source-over";
+  scratchCtx.fillStyle = "#c9a227";
+  scratchCtx.fillRect(0, 0, w, h);
+  scratchCtx.fillStyle = "#1a1305";
+  scratchCtx.textAlign = "center";
+  scratchCtx.textBaseline = "middle";
+  scratchCtx.font = "bold 15px 'Noto Sans KR', sans-serif";
+  scratchCtx.fillText("🎫 긁어서 확인하세요 🎫", w/2, h/2);
+}
+
+function getCanvasPos(e){
+  const rect = scratchCanvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) * (scratchCanvas.width / rect.width),
+    y: (clientY - rect.top) * (scratchCanvas.height / rect.height)
+  };
+}
+
+function scratchAt(pos){
+  scratchCtx.globalCompositeOperation = "destination-out";
+  scratchCtx.lineWidth = 26;
+  scratchCtx.lineCap = "round";
+  scratchCtx.lineJoin = "round";
+  if(lastScratchPoint){
+    scratchCtx.beginPath();
+    scratchCtx.moveTo(lastScratchPoint.x, lastScratchPoint.y);
+    scratchCtx.lineTo(pos.x, pos.y);
+    scratchCtx.stroke();
+  } else {
+    scratchCtx.beginPath();
+    scratchCtx.arc(pos.x, pos.y, 13, 0, Math.PI*2);
+    scratchCtx.fill();
+  }
+  lastScratchPoint = pos;
+}
+
+// 알파 채널을 성능을 위해 듬성듬성 샘플링해서 얼마나 지워졌는지 비율 계산
+function getScratchedRatio(){
+  const w = scratchCanvas.width, h = scratchCanvas.height;
+  const data = scratchCtx.getImageData(0, 0, w, h).data;
+  let transparent = 0, sampled = 0;
+  for(let i = 3; i < data.length; i += 16){ // 4픽셀당 1번, 알파 채널만 확인
+    sampled++;
+    if(data[i] < 30) transparent++;
+  }
+  return sampled > 0 ? transparent / sampled : 0;
+}
+
+function revealLotteryResult(){
+  if(scratchRevealed || !pendingLottery) return;
+  scratchRevealed = true;
+
+  drawResultContent(); // 은박 없이 결과만 전체 공개
+
+  const { price, tier, payout } = pendingLottery;
+  if(tier){
+    player.cash += payout;
+    document.getElementById("lotteryModalResult").innerHTML = `<b>${tier.name} 당첨!</b> ${won(payout)} 획득 (x${tier.mult})`;
+    showEventBanner(`🎫 복권 ${tier.name} 당첨! ${won(payout)} 획득했어요`);
+  } else {
+    document.getElementById("lotteryModalResult").textContent = `꽝... ${won(price)} 날아갔어요`;
+  }
+  renderWallet();
+  pushScore();
+  pendingLottery = null;
+  document.getElementById("scratchAllBtn").style.display = "none";
+  document.getElementById("lotteryModalCloseBtn").style.display = "block";
+}
+
+function handleScratchStart(e){
+  if(scratchRevealed || !pendingLottery) return;
+  e.preventDefault();
+  isScratchingNow = true;
+  lastScratchPoint = null;
+  scratchAt(getCanvasPos(e));
+}
+function handleScratchMove(e){
+  if(!isScratchingNow || scratchRevealed) return;
+  e.preventDefault();
+  scratchAt(getCanvasPos(e));
+  scratchMoveCount++;
+  if(scratchMoveCount % 3 === 0 && getScratchedRatio() >= SCRATCH_REVEAL_RATIO){
+    revealLotteryResult();
+  }
+}
+function handleScratchEnd(){
+  isScratchingNow = false;
+  lastScratchPoint = null;
+}
+
+scratchCanvas.addEventListener("mousedown", handleScratchStart);
+scratchCanvas.addEventListener("mousemove", handleScratchMove);
+window.addEventListener("mouseup", handleScratchEnd);
+scratchCanvas.addEventListener("touchstart", handleScratchStart, { passive:false });
+scratchCanvas.addEventListener("touchmove", handleScratchMove, { passive:false });
+scratchCanvas.addEventListener("touchend", handleScratchEnd);
+
+document.getElementById("scratchAllBtn").addEventListener("click", revealLotteryResult);
+document.getElementById("lotteryModalCloseBtn").addEventListener("click", () => {
+  lotteryScratchModal.style.display = "none";
+});
+lotteryScratchModal.addEventListener("click", (e) => {
+  if(e.target === lotteryScratchModal && scratchRevealed) lotteryScratchModal.style.display = "none";
+});
 
 document.getElementById("lotteryBuyBtn").addEventListener("click", buyLottery);
-document.getElementById("lotteryScratchBtn").addEventListener("click", scratchLottery);
 
 
 // 카드에 롱/숏 만기까지 남은 시간 표시 (일반 종목은 숏만, 코인은 롱/숏 둘 다 해당될 수 있음)
@@ -2358,6 +2457,7 @@ document.addEventListener("keydown", (e) => {
   if(hofModal.style.display === "flex") hofModal.style.display = "none";
   if(bankruptcyModal.style.display === "flex") bankruptcyModal.style.display = "none";
   if(rebirthModal.style.display === "flex") rebirthModal.style.display = "none";
+  if(lotteryScratchModal.style.display === "flex" && scratchRevealed) lotteryScratchModal.style.display = "none";
 });
 
 /* ========================= 파산 신청 ========================= */

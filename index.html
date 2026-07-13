@@ -1058,7 +1058,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-29";
+const BUILD_VERSION = "v2026-07-13-30";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -2754,12 +2754,21 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
-/* ========================= 점검 모드 ========================= */
+/* ========================= 점검 모드 / 버전 체크 ========================= */
 async function checkMaintenance(){
   if(!APPS_SCRIPT_URL) return { on:false };
   try{
     const res = await fetch(`${APPS_SCRIPT_URL}?action=status`);
     const data = await res.json();
+
+    // 서버가 요구하는 버전과 내 버전이 다르면 점검과 동일하게 화면을 막음
+    if(data.requiredVersion && data.requiredVersion !== BUILD_VERSION){
+      return {
+        on: true,
+        message: `새 버전이 배포됐어요 (내 버전 ${BUILD_VERSION} → 필요 버전 ${data.requiredVersion}). 새로고침해주세요.`
+      };
+    }
+
     return { on: !!data.maintenance, message: data.message || "서버 점검 중입니다. 잠시 후 다시 접속해주세요." };
   }catch(e){
     return { on:false }; // 상태 확인 자체가 실패하면 막지 않고 그냥 진행

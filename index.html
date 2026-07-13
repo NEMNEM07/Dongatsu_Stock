@@ -115,6 +115,11 @@
     display:flex;align-items:center;gap:10px;
   }
   .board-title::after{content:"";flex:1;height:1px;background:var(--line);}
+  .board-sub{
+    font-size:11.5px;color:var(--cream-dim);
+    margin:-4px 0 14px;line-height:1.5;
+  }
+  .board-sub b{color:var(--gold);font-weight:700;}
 
   .grid-items{
     display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;
@@ -137,9 +142,23 @@
   @keyframes flashDown{0%{background:rgba(212,85,63,.18);}100%{background:transparent;}}
   .card.event-hit{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset, 0 0 24px rgba(201,162,39,.25);}
 
-  .card-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .card-top{display:flex;justify-content:space-between;align-items:center;}
   .card-name{font-size:15px;font-weight:700;color:var(--cream);}
   .card-emoji{font-size:20px;margin-right:6px;}
+
+  .mode-toggle{
+    display:flex;gap:2px;flex-shrink:0;margin-left:8px;
+    background:var(--ink-900);border:1px solid var(--line);
+    border-radius:20px;padding:2px;
+  }
+  .mode-btn{
+    border:none;background:transparent;color:var(--cream-dim);
+    font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:16px;
+    cursor:pointer;transition:background .15s ease, color .15s ease;
+    white-space:nowrap;
+  }
+  .mode-btn.active{background:var(--gold);color:#1a1305;}
+  .mode-btn:not(.active):hover{color:var(--cream);}
   .card-price{
     font-family:'JetBrains Mono',monospace;
     font-size:22px;font-weight:700;margin-top:2px;
@@ -186,6 +205,43 @@
     padding:18px 16px;
     height:fit-content;
     position:sticky;top:70px;
+  }
+  .job-board{ position:static; margin-bottom:18px; }
+
+  .job-toast-wrap{ position:relative; height:0; }
+  .job-toast{
+    position:absolute;left:50%;top:-4px;transform:translateX(-50%);
+    color:var(--up);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;
+    animation:floatUp .9s ease forwards;
+    pointer-events:none;white-space:nowrap;
+  }
+  @keyframes floatUp{
+    0%{opacity:0; transform:translate(-50%, 4px);}
+    15%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%, -28px);}
+  }
+
+  .job-btn{
+    position:relative;overflow:hidden;
+    width:100%;padding:16px 12px;
+    background:linear-gradient(135deg,var(--gold-bright),var(--gold));
+    border:none;border-radius:10px;
+    color:#1a1305;font-weight:800;font-size:14px;
+    cursor:pointer;transition:transform .08s ease, filter .15s ease;
+    letter-spacing:.01em;
+  }
+  .job-btn:active:not(:disabled){transform:scale(.97);}
+  .job-btn:disabled{cursor:not-allowed;filter:grayscale(.35) brightness(.75);}
+  .job-btn .job-btn-label{position:relative;z-index:1;}
+  .job-btn .cooldown-fill{
+    position:absolute;left:0;top:0;bottom:0;width:0%;
+    background:rgba(0,0,0,.3);
+    pointer-events:none;
+  }
+
+  .job-earned{
+    margin-top:10px;text-align:center;
+    font-size:12px;color:var(--cream-dim);
   }
   .lb-row{
     display:flex;align-items:center;gap:10px;
@@ -313,13 +369,27 @@
 <div class="layout">
   <div>
     <h3 class="board-title">시세판</h3>
+    <p class="board-sub">카드 우측 상단에서 <b>롱</b>(오를 것 같으면 매수/매도) / <b>숏</b>(내릴 것 같으면 숏/커버)을 골라 거래하세요</p>
     <div class="grid-items" id="itemsGrid"></div>
   </div>
 
-  <div class="board">
-    <h3 class="board-title" style="margin-bottom:14px;">실시간 순위</h3>
-    <div id="leaderboardList"><div class="lb-empty">불러오는 중...</div></div>
-    <div class="lb-status" id="lbStatus">연결 대기 중</div>
+  <div>
+    <div class="board job-board">
+      <h3 class="board-title" style="margin-bottom:10px;">알바</h3>
+      <p class="board-sub" style="margin-bottom:14px;">시세가 안 움직일 땐 버튼을 눌러 소소하게 벌어보세요 (0.5초마다 한 번)</p>
+      <div class="job-toast-wrap" id="jobToastWrap"></div>
+      <button id="jobBtn" class="job-btn">
+        <span class="cooldown-fill" id="jobCooldownFill"></span>
+        <span class="job-btn-label">🍽️ 돈까스 서빙하기</span>
+      </button>
+      <div class="job-earned mono" id="jobEarnedTotal">알바 수익 ₩0</div>
+    </div>
+
+    <div class="board">
+      <h3 class="board-title" style="margin-bottom:14px;">실시간 순위</h3>
+      <div id="leaderboardList"><div class="lb-empty">불러오는 중...</div></div>
+      <div class="lb-status" id="lbStatus">연결 대기 중</div>
+    </div>
   </div>
 </div>
 
@@ -336,6 +406,10 @@ const EPOCH = Date.UTC(2026, 6, 13, 0, 0, 0); // 모든 클라이언트가 공�
 const STARTING_CASH = 100000;
 const LB_POLL_MS = 5000;       // 리더보드 갱신 주기
 const HISTORY_LEN = 30;
+
+const JOB_COOLDOWN_MS = 500;   // 알바 버튼 쿨다운 (매크로/연타 방지)
+const JOB_MIN_EARN = 300;
+const JOB_MAX_EARN = 700;
 
 const ITEM_DEFS = [
   { id:"yanghojae", name:"양호재의 초울트라 레전드 양호재급 돈까스", emoji:"🏆", price:22000, vol:0.030 },
@@ -363,6 +437,9 @@ const EVENT_TEMPLATES = [
 
 /* ========================= 상태 ========================= */
 let player = { name:"", password:"", cash:STARTING_CASH, holdings:{} };
+let cardMode = {}; // { itemId: 'long' | 'short' } 카드별 현재 거래 모드 (기본 롱)
+let jobEarnedTotal = 0;
+let lastJobClickAt = 0; // performance.now() 기준, 쿨다운 판정용 (버튼 disabled 조작에 대한 이중 방어)
 let items = ITEM_DEFS.map(d => ({
   ...d,
   prevPrice:d.price,
@@ -373,7 +450,7 @@ let items = ITEM_DEFS.map(d => ({
 let sparkCtxCache = {};
 
 /* ========================= 유틸 ========================= */
-const won = n => "₩" + Math.round(n).toLocaleString("ko-KR");
+const won = n => (n < 0 ? "-" : "") + "₩" + Math.round(Math.abs(n)).toLocaleString("ko-KR");
 const clampPrice = (p, it) => Math.min(it.ceiling, Math.max(it.floor, Math.round(p)));
 
 function totalPortfolio(){
@@ -493,6 +570,18 @@ function showEventBanner(msg){
 }
 
 /* ========================= 거래 ========================= */
+const SHORT_MARGIN_MULT = 3; // 총 자산 대비 숏 포지션 총 노출 한도 (증거금 없는 무한 숏 방지)
+
+function currentShortExposure(excludeId){
+  let exp = 0;
+  for(const it of items){
+    if(it.id === excludeId) continue;
+    const h = player.holdings[it.id] || 0;
+    if(h < 0) exp += (-h) * it.price;
+  }
+  return exp;
+}
+
 function buy(id, qty){
   qty = Math.max(1, Math.floor(qty)||1);
   const it = items.find(i=>i.id===id);
@@ -514,12 +603,122 @@ function sell(id, qty){
   renderItems(); renderWallet();
 }
 
+// 숏 진입/추가: 보유 중(롱)이면 막힘 - 먼저 매도로 롱 정리 후 숏 모드로 전환해야 함
+function shortSell(id, qty){
+  qty = Math.max(1, Math.floor(qty)||1);
+  const it = items.find(i=>i.id===id);
+  const have = player.holdings[id]||0;
+  if(have > 0) return flashCard(id,"blocked");
+
+  const otherExposure = currentShortExposure(id);
+  const ownExposure = (-have) * it.price;
+  const maxExposure = totalPortfolio() * SHORT_MARGIN_MULT;
+  const room = Math.max(0, maxExposure - otherExposure - ownExposure);
+  const maxAddQty = Math.floor(room / it.price);
+  if(maxAddQty <= 0) return flashCard(id, "margin");
+  qty = Math.min(qty, maxAddQty);
+
+  player.cash += it.price * qty;
+  player.holdings[id] = have - qty;
+  renderItems(); renderWallet();
+}
+
+// 숏 청산(커버): 숏 크기만큼만 매수해서 0으로 되돌림 (그 이상 롱으로 전환하려면 롱 모드에서 별도 매수)
+function coverShort(id, qty){
+  qty = Math.max(1, Math.floor(qty)||1);
+  const it = items.find(i=>i.id===id);
+  const have = player.holdings[id]||0;
+  if(have >= 0) return;
+
+  qty = Math.min(qty, -have);
+  const maxAffordable = Math.floor(player.cash / it.price);
+  qty = Math.min(qty, maxAffordable);
+  if(qty <= 0) return flashCard(id, "insufficient");
+
+  player.cash -= it.price * qty;
+  player.holdings[id] = have + qty;
+  renderItems(); renderWallet();
+}
+
 function flashCard(id, mode){
   const card = document.getElementById("card-"+id);
   if(!card) return;
   card.style.borderColor = "var(--down)";
   setTimeout(()=>{ card.style.borderColor=""; }, 400);
 }
+
+// 카드의 롱/숏 모드에 따라 매수·매도 버튼의 라벨/동작(data-act)/활성화 여부를 갱신
+function applyCardMode(it){
+  const card = document.getElementById("card-"+it.id);
+  if(!card) return;
+  const mode = cardMode[it.id] || "long";
+  const have = player.holdings[it.id] || 0;
+  const buyBtn = card.querySelector(".btn-buy");
+  const sellBtn = card.querySelector(".btn-sell");
+
+  card.querySelectorAll(".mode-btn").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+
+  if(mode === "short"){
+    buyBtn.textContent = "커버";
+    buyBtn.dataset.act = "cover";
+    buyBtn.disabled = have >= 0;
+    sellBtn.textContent = "숏";
+    sellBtn.dataset.act = "short";
+    sellBtn.disabled = have > 0;
+  } else {
+    buyBtn.textContent = "매수";
+    buyBtn.dataset.act = "buy";
+    buyBtn.disabled = false;
+    sellBtn.textContent = "매도";
+    sellBtn.dataset.act = "sell";
+    sellBtn.disabled = have <= 0;
+  }
+}
+
+/* ========================= 알바 (쿨다운 + 매크로 방지) ========================= */
+function doJob(e){
+  // 1) 진짜 사용자 클릭이 아닌 합성 이벤트(콘솔 매크로 등 .click()/dispatchEvent 호출)는 무시
+  if(e && e.isTrusted === false) return;
+
+  // 2) 버튼 disabled 속성을 조작해서 우회하는 경우를 대비한 이중 시간 체크
+  const now = performance.now();
+  if(now - lastJobClickAt < JOB_COOLDOWN_MS) return;
+  lastJobClickAt = now;
+
+  const earn = Math.floor(JOB_MIN_EARN + Math.random() * (JOB_MAX_EARN - JOB_MIN_EARN));
+  player.cash += earn;
+  jobEarnedTotal += earn;
+
+  renderWallet();
+  document.getElementById("jobEarnedTotal").textContent = "알바 수익 " + won(jobEarnedTotal);
+  showJobToast(earn);
+  runJobCooldownUI();
+}
+
+function showJobToast(earn){
+  const wrap = document.getElementById("jobToastWrap");
+  const el = document.createElement("div");
+  el.className = "job-toast";
+  el.textContent = "+" + won(earn);
+  wrap.appendChild(el);
+  setTimeout(()=> el.remove(), 900);
+}
+
+function runJobCooldownUI(){
+  const btn = document.getElementById("jobBtn");
+  const fill = document.getElementById("jobCooldownFill");
+  btn.disabled = true;
+
+  fill.style.transition = "none";
+  fill.style.width = "100%";
+  void fill.offsetWidth; // 강제 리플로우: 아래 transition이 처음부터 다시 걸리도록
+  fill.style.transition = `width ${JOB_COOLDOWN_MS}ms linear`;
+  fill.style.width = "0%";
+
+  setTimeout(()=>{ btn.disabled = false; }, JOB_COOLDOWN_MS);
+}
+
+document.getElementById("jobBtn").addEventListener("click", doJob);
 
 /* ========================= 렌더링 ========================= */
 function renderWallet(){
@@ -567,12 +766,16 @@ function renderItems(){
       card.innerHTML = `
         <div class="card-top">
           <div class="card-name"><span class="card-emoji">${it.emoji}</span>${it.name}</div>
+          <div class="mode-toggle" data-id="${it.id}">
+            <button class="mode-btn active" data-mode="long">롱</button>
+            <button class="mode-btn" data-mode="short">숏</button>
+          </div>
         </div>
         <div class="card-price mono" id="price-${it.id}"></div>
         <div class="card-delta mono" id="delta-${it.id}"></div>
         <canvas class="spark" id="spark-${it.id}"></canvas>
         <div class="holding-line">
-          <span>보유 <span id="have-${it.id}"></span>개</span>
+          <span id="have-${it.id}">무포지션</span>
           <span id="eval-${it.id}"></span>
         </div>
         <div class="trade-row">
@@ -588,11 +791,12 @@ function renderItems(){
     document.getElementById("price-"+it.id).style.color = dirColor;
     document.getElementById("delta-"+it.id).innerHTML = `${arrow} ${Math.abs(delta).toLocaleString()} (${pct>=0?"+":""}${pct.toFixed(2)}%)`;
     document.getElementById("delta-"+it.id).className = "card-delta mono " + dir;
-    document.getElementById("have-"+it.id).textContent = have;
+
+    const haveText = have > 0 ? `롱 ${have}개` : have < 0 ? `숏 ${-have}개` : "무포지션";
+    document.getElementById("have-"+it.id).textContent = haveText;
     document.getElementById("eval-"+it.id).textContent = have ? won(have*it.price) : "";
 
-    const sellBtn = card.querySelector('[data-act="sell"]');
-    sellBtn.disabled = have <= 0;
+    applyCardMode(it);
 
     if(it._eventFlash){
       card.classList.remove("event-hit");
@@ -685,13 +889,26 @@ function escapeHtml(s){
 
 /* ========================= 이벤트 바인딩 ========================= */
 document.getElementById("itemsGrid").addEventListener("click", e=>{
+  const modeBtn = e.target.closest("button.mode-btn");
+  if(modeBtn){
+    const wrap = modeBtn.closest(".mode-toggle");
+    const id = wrap.dataset.id;
+    cardMode[id] = modeBtn.dataset.mode;
+    const it = items.find(i=>i.id===id);
+    applyCardMode(it);
+    return;
+  }
+
   const btn = e.target.closest("button[data-act]");
   if(!btn) return;
   const id = btn.dataset.id;
   const qtyInput = document.getElementById("qty-"+id);
   const qty = parseInt(qtyInput.value,10) || 1;
-  if(btn.dataset.act === "buy") buy(id, qty);
-  else sell(id, qty);
+  const act = btn.dataset.act;
+  if(act === "buy") buy(id, qty);
+  else if(act === "sell") sell(id, qty);
+  else if(act === "short") shortSell(id, qty);
+  else if(act === "cover") coverShort(id, qty);
 });
 
 document.getElementById("startBtn").addEventListener("click", startGame);

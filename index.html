@@ -600,7 +600,7 @@
 
     <div class="board rebirth-board">
       <h3 class="board-title" style="margin-bottom:10px;">환생 <span class="rebirth-badge" id="rebirthBadge">✨0회</span></h3>
-      <p class="board-sub" style="margin-bottom:14px;">총자산 500만원부터 환생할 수 있어요. 환생하면 자산은 초기화되지만, <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요.</p>
+      <p class="board-sub" style="margin-bottom:14px;">총자산 <b id="rebirthThresholdText">5000만원</b>부터 환생할 수 있어요. 환생하면 자산은 초기화되지만, <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요.</p>
       <button id="rebirthBtn" class="rebirth-btn" disabled>환생하기</button>
     </div>
 
@@ -704,7 +704,7 @@
       <p>매수할 때 수량 옆 드롭다운에서 <b>1x/2x/3x</b>를 고를 수 있어요. 2x 이상이면 실제 가격의 일부(증거금)만 내고 나머지는 빌려서 사는 거라, <b>오르면 이득도 배로, 내리면 손해도 배로</b> 커져요.</p>
       <ul>
         <li>레버리지 사용 시 증거금에 <b>추가 수수료 1%</b>가 더 붙어요</li>
-        <li>빌릴 수 있는 총 부채는 <b>총자산의 2배</b>까지만 허용돼요</li>
+        <li>빌릴 수 있는 총 부채는 <b>총자산의 1.5배</b>까지만 허용돼요</li>
         <li>포지션 가치 대비 <b>자기자본이 15% 밑으로 떨어지면 마진콜</b> — 그 순간 시장가로 강제 청산되고 빚부터 상환돼요. 카드에 부채/자기자본 비율이 표시되니 잘 보고 있어야 해요</li>
       </ul>
     </div>
@@ -716,7 +716,7 @@
 
     <div class="guide-section">
       <h3>✨ 환생</h3>
-      <p>총자산이 <b>500만원</b>을 넘으면 사이드바에서 환생할 수 있어요. 환생하면 현금·보유·부채가 전부 초기화되고 100,000원으로 다시 시작하지만, 대신 <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요. 여러 번 환생할수록 보너스가 쌓여서 다음 판이 점점 더 유리해져요. 리더보드에도 환생 횟수가 ✨N으로 표시돼요.</p>
+      <p>총자산이 <b>500만원</b>을 넘으면 사이드바에서 환생할 수 있어요. 환생하면 현금·보유·부채가 전부 초기화되고 100,000원으로 다시 시작하지만, 대신 <b>매도가에 영구 보너스(+5%/회)</b>가 붙어요. 여러 번 환생할수록 보너스가 쌓여서 다음 판이 점점 더 유리해지고, 대신 <b>다음 환생 기준 금액도 1.5배씩 늘어나요</b>(500만 → 750만 → 1,125만…). 리더보드에도 환생 횟수가 ✨N으로 표시돼요.</p>
     </div>
 
     <div class="guide-section">
@@ -727,7 +727,7 @@
         <li><b>커버</b>: 숏 갚기 - 가격이 내려갔을 때 싸게 사서 청산 (많이 내린 뒤에 커버할수록 이득)</li>
         <li>반대로 가격이 오르면 손해를 볼 수 있어요 — 숏은 롱보다 위험 부담이 있는 대신 하락장에서도 돈을 벌 수 있는 방법이에요</li>
         <li>롱 보유 중엔 숏 불가, 숏 보유 중엔 롱 매수는 자동으로 커버부터 처리돼요</li>
-        <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 3배</b>까지만 숏 노출이 허용돼요</li>
+        <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 1.5배</b>까지만 숏 노출이 허용돼요</li>
         <li>숏은 <b>만기가 45초</b>예요. 진입/추가할 때마다 타이머가 45초로 갱신되고, 카드에 남은 시간이 표시돼요. 만기 지나면 그 순간 시장가로 <b>강제 청산</b>돼요 — 현금이 부족해도 강제로 집행되니 빚(마이너스 자산)이 생길 수 있어요, 그럴 땐 파산 신청을 쓰세요</li>
       </ul>
     </div>
@@ -756,7 +756,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-21"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
+const BUILD_VERSION = "v2026-07-13-22"; // 파일 고칠 때마다 이 값도 바꾸기 - 다들 같은 버전인지 화면 하단에서 눈으로 확인 가능
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -797,8 +797,13 @@ const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
 const BANKRUPTCY_CASH = 50000; // 파산 신청 시 재지급되는 금액 (시작 자금보다 적은 페널티)
 
 /* ========================= 환생 ========================= */
-const REBIRTH_THRESHOLD = 5000000;      // 환생 가능 최소 총자산 (500만원)
+const REBIRTH_THRESHOLD = 50000000;      // 첫 환생 가능 최소 총자산 (5000만원)
+const REBIRTH_THRESHOLD_GROWTH = 1.5;   // 환생할 때마다 다음 기준이 이 배율만큼 늘어남
 const REBIRTH_SELL_BONUS_PER_LEVEL = 0.05; // 환생 1회당 매도가 영구 보너스 +5%
+
+function rebirthThresholdNow(){
+  return Math.round(REBIRTH_THRESHOLD * Math.pow(REBIRTH_THRESHOLD_GROWTH, player.rebirthCount));
+}
 
 function rebirthSellBonus(){
   return player.rebirthCount * REBIRTH_SELL_BONUS_PER_LEVEL;
@@ -1024,13 +1029,13 @@ function showEventBanner(msg){
 }
 
 /* ========================= 거래 ========================= */
-const SHORT_MARGIN_MULT = 3; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
+const SHORT_MARGIN_MULT = 1.5; // 총 자산 대비 숏 포지션 총 노출 한도 (기존 3배 -> 무자본 몰빵 숏 방지용으로 축소)
 const SHORT_FEE_RATE = 0.01;   // 숏 진입 시 수수료 1% - "찍고 바로 커버" 무위험 사이클에 마찰 추가
 const SHORT_MATURITY_MS = 45000; // 숏 포지션 만기 (45초) - 지나면 시장가로 강제 청산
 
 /* ========================= 레버리지 (롱 포지션) ========================= */
 const LEVERAGE_OPTIONS = [1, 2, 3]; // 선택 가능한 배율
-const LEVERAGE_MARGIN_MULT = 2;   // 총자산 대비 빌릴 수 있는 부채 총 한도 (숏 증거금 한도와 동일하게 맞춤)
+const LEVERAGE_MARGIN_MULT = 1.5;   // 총자산 대비 빌릴 수 있는 부채 총 한도 (숏 증거금 한도와 동일하게 맞춤)
 const LEVERAGE_FEE_RATE = 0.01;     // 레버리지(2x 이상) 사용 시 증거금에 붙는 추가 수수료 1%
 const MAINTENANCE_MARGIN_RATIO = 0.15; // 포지션 가치 대비 자기자본 비율이 이 밑으로 떨어지면 마진콜(강제청산)
 const TRADE_FEE_RATE = 0.005; // 매수/매도(롱) 왕복 수수료 0.5%씩 - 숏의 마찰(수수료/증거금/만기)과 균형 맞춤
@@ -1464,7 +1469,7 @@ bankruptcyModal.addEventListener("click", (e) => {
 const rebirthModal = document.getElementById("rebirthModal");
 
 document.getElementById("rebirthBtn").addEventListener("click", () => {
-  if(totalPortfolio() < REBIRTH_THRESHOLD) return; // 방어: 조건 재확인
+  if(totalPortfolio() < rebirthThresholdNow()) return; // 방어: 조건 재확인
   const nextBonusPct = ((player.rebirthCount + 1) * REBIRTH_SELL_BONUS_PER_LEVEL * 100).toFixed(0);
   document.getElementById("rebirthNextBonus").textContent = `+${nextBonusPct}%`;
   rebirthModal.style.display = "flex";
@@ -1502,9 +1507,11 @@ function renderWallet(){
 function renderRebirthPanel(){
   const badge = document.getElementById("rebirthBadge");
   const btn = document.getElementById("rebirthBtn");
+  const thresholdText = document.getElementById("rebirthThresholdText");
   if(!badge || !btn) return;
   badge.textContent = `✨${player.rebirthCount}회`;
-  btn.disabled = totalPortfolio() < REBIRTH_THRESHOLD;
+  btn.disabled = totalPortfolio() < rebirthThresholdNow();
+  if(thresholdText) thresholdText.textContent = won(rebirthThresholdNow());
 }
 
 function drawSpark(canvas, history, dirColor){

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>돈까스거래소</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#08120e;
+    --ink-800:#0d1c16;
+    --ink-700:#12261d;
+    --ink-600:#1a3327;
+    --line:#2b4536;
+    --gold:#c9a227;
+    --gold-bright:#e6c34f;
+    --cream:#ece4d0;
+    --cream-dim:#a9b6ac;
+    --up:#5fbf85;
+    --down:#d4553f;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #143324 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, #1a2e1f 0%, transparent 55%),
+      var(--ink-900);
+    color:var(--cream);
+    font-family:'Noto Sans KR',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .serif{font-family:'Gowun Batang',serif;}
+
+  /* ===== Ticker tape ===== */
+  .ticker-wrap{
+    background:linear-gradient(180deg,#0a1712,#0d1c16);
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+    white-space:nowrap;
+    position:sticky;top:0;
+    z-index:50;
+  }
+  .ticker-track{
+    display:inline-block;
+    padding:9px 0;
+    animation:scroll-left 26s linear infinite;
+  }
+  .ticker-item{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin:0 26px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    letter-spacing:.02em;
+  }
+  .ticker-item .nm{color:var(--cream-dim);}
+  .ticker-item .up{color:var(--up);}
+  .ticker-item .down{color:var(--down);}
+  @keyframes scroll-left{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+
+  /* ===== Header ===== */
+  header{
+    max-width:1180px;margin:0 auto;
+    padding:34px 20px 18px;
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);
+  }
+  .brand-eyebrow{
+    color:var(--gold);
+    font-size:11px;letter-spacing:.32em;
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Gowun Batang',serif;
+    font-size:38px;margin:0;
+    color:var(--cream);
+    letter-spacing:.01em;
+  }
+  h1 span{color:var(--gold-bright);}
+  .wallet{
+    text-align:right;
+  }
+  .wallet .label{font-size:11px;color:var(--cream-dim);letter-spacing:.12em;text-transform:uppercase;}
+  .wallet .value{
+    font-family:'JetBrains Mono',monospace;
+    font-size:30px;font-weight:700;color:var(--gold-bright);
+  }
+  .wallet .sub{font-size:12px;color:var(--cream-dim);margin-top:2px;}
+
+  /* ===== Layout ===== */
+  .layout{
+    max-width:1180px;margin:0 auto;
+    padding:26px 20px 80px;
+    display:grid;
+    grid-template-columns:1fr 320px;
+    gap:22px;
+  }
+  @media (max-width:880px){.layout{grid-template-columns:1fr;}}
+
+  .board-title{
+    font-family:'Gowun Batang',serif;
+    font-size:16px;color:var(--gold);
+    margin:0 0 12px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .board-title::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  .grid-items{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  }
+  @media (max-width:600px){.grid-items{grid-template-columns:1fr;}}
+
+  .card{
+    background:linear-gradient(180deg,var(--ink-700),var(--ink-800));
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    position:relative;
+    overflow:hidden;
+    transition:border-color .3s ease, transform .2s ease;
+  }
+  .card.flash-up{animation:flashUp .7s ease;}
+  .card.flash-down{animation:flashDown .7s ease;}
+  @keyframes flashUp{0%{background:rgba(95,191,133,.18);}100%{background:transparent;}}
+  @keyframes flashDown{0%{background:rgba(212,85,63,.18);}100%{background:transparent;}}
+  .card.event-hit{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset, 0 0 24px rgba(201,162,39,.25);}
+
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .card-name{font-size:15px;font-weight:700;color:var(--cream);}
+  .card-emoji{font-size:20px;margin-right:6px;}
+  .card-price{
+    font-family:'JetBrains Mono',monospace;
+    font-size:22px;font-weight:700;margin-top:2px;
+  }
+  .card-delta{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;}
+  .up{color:var(--up);}
+  .down{color:var(--down);}
+  .flat{color:var(--cream-dim);}
+
+  canvas.spark{width:100%;height:44px;display:block;margin:10px 0 8px;}
+
+  .holding-line{
+    display:flex;justify-content:space-between;
+    font-size:11px;color:var(--cream-dim);
+    margin-bottom:8px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .trade-row{display:flex;gap:6px;}
+  .trade-row input{
+    width:56px;background:var(--ink-900);
+    border:1px solid var(--line);border-radius:6px;
+    color:var(--cream);text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:13px;
+    padding:7px 4px;
+  }
+  .trade-row input:focus{outline:1px solid var(--gold);}
+  .btn{
+    flex:1;border:none;border-radius:6px;
+    padding:7px 6px;font-size:12px;font-weight:700;
+    cursor:pointer;transition:filter .15s ease, transform .1s ease;
+    letter-spacing:.02em;
+  }
+  .btn:active{transform:scale(.96);}
+  .btn-buy{background:var(--up);color:#0b1d13;}
+  .btn-sell{background:var(--down);color:#241009;}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .btn:hover:not(:disabled){filter:brightness(1.12);}
+
+  /* ===== Leaderboard ===== */
+  .board{
+    background:linear-gradient(180deg,var(--ink-700),var(--ink-800));
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 16px;
+    height:fit-content;
+    position:sticky;top:70px;
+  }
+  .lb-row{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 6px;border-radius:6px;
+    font-size:13px;
+  }
+  .lb-row.me{background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.4);}
+  .lb-rank{
+    width:22px;text-align:center;font-family:'JetBrains Mono',monospace;
+    font-weight:700;color:var(--cream-dim);font-size:12px;
+  }
+  .lb-row:nth-child(1) .lb-rank{color:#e6c34f;}
+  .lb-row:nth-child(2) .lb-rank{color:#c9c9c9;}
+  .lb-row:nth-child(3) .lb-rank{color:#c9834a;}
+  .lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--gold-bright);}
+  .lb-empty{color:var(--cream-dim);font-size:12px;padding:8px 6px;}
+  .lb-status{font-size:10.5px;color:var(--cream-dim);margin-top:10px;text-align:right;}
+
+  /* ===== Event banner ===== */
+  #eventBanner{
+    position:fixed;left:50%;top:16px;
+    transform:translate(-50%,-140%);
+    z-index:200;
+    background:linear-gradient(135deg,#1a3327,#0d1c16);
+    border:1px solid var(--gold);
+    box-shadow:var(--shadow), 0 0 30px rgba(201,162,39,.35);
+    border-radius:10px;
+    padding:14px 22px;
+    max-width:92vw;
+    display:flex;align-items:center;gap:14px;
+    transition:transform .45s cubic-bezier(.2,.9,.2,1.2);
+  }
+  #eventBanner.show{transform:translate(-50%,0);}
+  #eventBanner .tag{
+    font-family:'Gowun Batang',serif;color:var(--gold-bright);
+    font-size:13px;letter-spacing:.14em;
+  }
+  #eventBanner .msg{font-size:14px;color:var(--cream);}
+
+  /* ===== Name modal ===== */
+  #nameModal{
+    position:fixed;inset:0;background:rgba(4,10,7,.86);
+    display:flex;align-items:center;justify-content:center;
+    z-index:300;backdrop-filter:blur(3px);
+  }
+  .modal-card{
+    background:linear-gradient(180deg,var(--ink-700),var(--ink-800));
+    border:1px solid var(--gold);
+    border-radius:14px;
+    padding:38px 34px;
+    width:min(400px,88vw);
+    text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .modal-card .eyebrow{color:var(--gold);font-size:11px;letter-spacing:.3em;text-transform:uppercase;}
+  .modal-card h2{font-family:'Gowun Batang',serif;font-size:26px;margin:8px 0 4px;}
+  .modal-card p{color:var(--cream-dim);font-size:13px;margin:0 0 22px;}
+  .modal-card input{
+    width:100%;padding:12px 14px;background:var(--ink-900);
+    border:1px solid var(--line);border-radius:8px;
+    color:var(--cream);font-size:15px;text-align:center;
+    margin-bottom:14px;
+  }
+  .modal-card input:focus{outline:1px solid var(--gold);}
+  .modal-card button{
+    width:100%;padding:13px;border:none;border-radius:8px;
+    background:var(--gold);color:#1a1305;font-weight:700;font-size:14px;
+    cursor:pointer;letter-spacing:.03em;
+  }
+  .modal-card button:hover{filter:brightness(1.08);}
+  .modal-card .starting{
+    margin-top:16px;font-family:'JetBrains Mono',monospace;
+    font-size:12px;color:var(--cream-dim);
+  }
+
+  footer{
+    text-align:center;color:var(--cream-dim);
+    font-size:11px;padding:20px;letter-spacing:.05em;
+  }
+</style>
+</head>
+<body>
+
+<div id="nameModal">
+  <div class="modal-card">
+    <div class="eyebrow">Donkatsu Exchange</div>
+    <h2>돈까스거래소 입장</h2>
+    <p>이름을 입력하고 예측 트레이딩을 시작하세요</p>
+    <input id="nameInput" maxlength="10" placeholder="닉네임 (최대 10자)" autocomplete="off">
+    <button id="startBtn">입장하기</button>
+    <div class="starting">기초 자금 100,000원 지급</div>
+  </div>
+</div>
+
+<div id="eventBanner">
+  <div class="tag">돈까스 속보</div>
+  <div class="msg" id="eventMsg"></div>
+</div>
+
+<div class="ticker-wrap">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<header>
+  <div>
+    <p class="brand-eyebrow">Donkatsu Exchange · Est. 2026</p>
+    <h1>돈까스<span>거래소</span></h1>
+  </div>
+  <div class="wallet">
+    <div class="label">평가 자산</div>
+    <div class="value mono" id="totalValue">₩0</div>
+    <div class="sub mono" id="cashValue">현금 ₩0</div>
+  </div>
+</header>
+
+<div class="layout">
+  <div>
+    <h3 class="board-title">시세판</h3>
+    <div class="grid-items" id="itemsGrid"></div>
+  </div>
+
+  <div class="board">
+    <h3 class="board-title" style="margin-bottom:14px;">실시간 순위</h3>
+    <div id="leaderboardList"><div class="lb-empty">불러오는 중...</div></div>
+    <div class="lb-status" id="lbStatus">연결 대기 중</div>
+  </div>
+</div>
+
+<footer>돈가스 가격은 실시간으로 변동합니다 · 모든 거래는 시뮬레이션입니다</footer>
+
+<script>
+/* ========================= 설정 ========================= */
+// 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
+const APPS_SCRIPT_URL = "";
+
+const TICK_MS = 3000;          // 가격 갱신 주기
+const EVENT_MIN_MS = 18000;    // 이벤트 최소 간격
+const EVENT_MAX_MS = 38000;    // 이벤트 최대 간격
+const STARTING_CASH = 100000;
+const LB_POLL_MS = 5000;       // 리더보드 갱신 주기
+const HISTORY_LEN = 30;
+
+const ITEM_DEFS = [
+  { id:"king",   name:"왕돈까스",     emoji:"🍖", price:14000, vol:0.022 },
+  { id:"cheese", name:"치즈돈까스",   emoji:"🧀", price:11000, vol:0.028 },
+  { id:"curry",  name:"카레돈까스",   emoji:"🍛", price:10000, vol:0.025 },
+  { id:"spicy",  name:"매운돈까스",   emoji:"🌶️", price:12000, vol:0.035 },
+  { id:"sweet",  name:"고구마돈까스", emoji:"🍠", price:9500,  vol:0.020 },
+  { id:"black",  name:"흑돼지돈까스", emoji:"🐷", price:18000, vol:0.018 },
+];
+
+const EVENT_TEMPLATES = [
+  { type:"surge", text:n => `${n} 원육 파동! 공급 부족으로 가격 폭등`, min:1.35, max:1.8 },
+  { type:"surge", text:n => `${n} 맛집으로 SNS 입소문, 수요 폭증`, min:1.3, max:1.6 },
+  { type:"crash", text:n => `${n} 위생 점검 이슈 보도, 가격 급락`, min:0.5, max:0.7 },
+  { type:"crash", text:n => `${n} 대형 프랜차이즈 할인전 시작`, min:0.55, max:0.75 },
+  { type:"crash", text:n => `${n} 기름값 안정화, 원가 하락`, min:0.6, max:0.8 },
+  { type:"surge", text:n => `${n} 미슐랭 가이드 등재설 확산`, min:1.4, max:1.9 },
+];
+
+/* ========================= 상태 ========================= */
+let player = { name:"", cash:STARTING_CASH, holdings:{} };
+let items = ITEM_DEFS.map(d => ({ ...d, prevPrice:d.price, history:[d.price] }));
+let sparkCtxCache = {};
+
+/* ========================= 유틸 ========================= */
+const won = n => "₩" + Math.round(n).toLocaleString("ko-KR");
+const clampPrice = p => Math.max(500, Math.round(p));
+
+function totalPortfolio(){
+  let v = player.cash;
+  for(const it of items){ v += (player.holdings[it.id]||0) * it.price; }
+  return v;
+}
+
+/* ========================= 가격 시뮬레이션 ========================= */
+function tickPrices(){
+  for(const it of items){
+    it.prevPrice = it.price;
+    const drift = (Math.random()-0.5) * 2 * it.vol;
+    let next = it.price * (1 + drift);
+    next = clampPrice(next);
+    it.price = next;
+    it.history.push(next);
+    if(it.history.length > HISTORY_LEN) it.history.shift();
+  }
+  renderItems();
+  renderWallet();
+  renderTicker();
+}
+
+function triggerEvent(){
+  const n = 1 + (Math.random() < 0.35 ? 1 : 0); // 가끔 2개 동시
+  const shuffled = [...items].sort(()=>Math.random()-0.5).slice(0,n);
+  const tmpl = EVENT_TEMPLATES[Math.floor(Math.random()*EVENT_TEMPLATES.length)];
+  const names = shuffled.map(s=>s.name).join(", ");
+
+  for(const it of shuffled){
+    it.prevPrice = it.price;
+    const factor = tmpl.min + Math.random()*(tmpl.max - tmpl.min);
+    it.price = clampPrice(it.price * factor);
+    it.history.push(it.price);
+    if(it.history.length > HISTORY_LEN) it.history.shift();
+    it._eventFlash = tmpl.type;
+  }
+
+  showEventBanner(tmpl.text(names));
+  renderItems();
+  renderWallet();
+  renderTicker();
+
+  setTimeout(()=>{
+    for(const it of shuffled) it._eventFlash = null;
+  }, 1200);
+
+  scheduleNextEvent();
+}
+
+function scheduleNextEvent(){
+  const delay = EVENT_MIN_MS + Math.random()*(EVENT_MAX_MS - EVENT_MIN_MS);
+  setTimeout(triggerEvent, delay);
+}
+
+function showEventBanner(msg){
+  const el = document.getElementById("eventBanner");
+  document.getElementById("eventMsg").textContent = msg;
+  el.classList.add("show");
+  clearTimeout(showEventBanner._t);
+  showEventBanner._t = setTimeout(()=>el.classList.remove("show"), 4200);
+}
+
+/* ========================= 거래 ========================= */
+function buy(id, qty){
+  qty = Math.max(1, Math.floor(qty)||1);
+  const it = items.find(i=>i.id===id);
+  const cost = it.price * qty;
+  if(cost > player.cash) return flashCard(id,"insufficient");
+  player.cash -= cost;
+  player.holdings[id] = (player.holdings[id]||0) + qty;
+  renderItems(); renderWallet();
+}
+
+function sell(id, qty){
+  qty = Math.max(1, Math.floor(qty)||1);
+  const it = items.find(i=>i.id===id);
+  const have = player.holdings[id]||0;
+  if(qty > have) qty = have;
+  if(qty <= 0) return;
+  player.cash += it.price * qty;
+  player.holdings[id] = have - qty;
+  renderItems(); renderWallet();
+}
+
+function flashCard(id, mode){
+  const card = document.getElementById("card-"+id);
+  if(!card) return;
+  card.style.borderColor = "var(--down)";
+  setTimeout(()=>{ card.style.borderColor=""; }, 400);
+}
+
+/* ========================= 렌더링 ========================= */
+function renderWallet(){
+  document.getElementById("totalValue").textContent = won(totalPortfolio());
+  document.getElementById("cashValue").textContent = "현금 " + won(player.cash);
+}
+
+function drawSpark(canvas, history, dirColor){
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width = canvas.clientWidth * devicePixelRatio;
+  const h = canvas.height = canvas.clientHeight * devicePixelRatio;
+  ctx.clearRect(0,0,w,h);
+  if(history.length < 2) return;
+  const min = Math.min(...history), max = Math.max(...history);
+  const range = (max - min) || 1;
+  ctx.beginPath();
+  history.forEach((p,i)=>{
+    const x = (i/(history.length-1)) * w;
+    const y = h - ((p-min)/range) * (h*0.85) - h*0.075;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = dirColor;
+  ctx.lineWidth = 2 * devicePixelRatio;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+}
+
+function renderItems(){
+  const grid = document.getElementById("itemsGrid");
+  const existing = grid.children.length === items.length;
+
+  items.forEach((it, idx) => {
+    const delta = it.price - it.prevPrice;
+    const pct = it.prevPrice ? (delta/it.prevPrice*100) : 0;
+    const dir = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
+    const dirColor = dir==="up" ? "#5fbf85" : dir==="down" ? "#d4553f" : "#a9b6ac";
+    const arrow = dir==="up" ? "▲" : dir==="down" ? "▼" : "—";
+    const have = player.holdings[it.id]||0;
+
+    let card = document.getElementById("card-"+it.id);
+    if(!card){
+      card = document.createElement("div");
+      card.className = "card";
+      card.id = "card-"+it.id;
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="card-name"><span class="card-emoji">${it.emoji}</span>${it.name}</div>
+        </div>
+        <div class="card-price mono" id="price-${it.id}"></div>
+        <div class="card-delta mono" id="delta-${it.id}"></div>
+        <canvas class="spark" id="spark-${it.id}"></canvas>
+        <div class="holding-line">
+          <span>보유 <span id="have-${it.id}"></span>개</span>
+          <span id="eval-${it.id}"></span>
+        </div>
+        <div class="trade-row">
+          <input type="number" min="1" value="1" id="qty-${it.id}">
+          <button class="btn btn-buy" data-act="buy" data-id="${it.id}">매수</button>
+          <button class="btn btn-sell" data-act="sell" data-id="${it.id}">매도</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+
+    document.getElementById("price-"+it.id).textContent = won(it.price);
+    document.getElementById("price-"+it.id).style.color = dirColor;
+    document.getElementById("delta-"+it.id).innerHTML = `${arrow} ${Math.abs(delta).toLocaleString()} (${pct>=0?"+":""}${pct.toFixed(2)}%)`;
+    document.getElementById("delta-"+it.id).className = "card-delta mono " + dir;
+    document.getElementById("have-"+it.id).textContent = have;
+    document.getElementById("eval-"+it.id).textContent = have ? won(have*it.price) : "";
+
+    const sellBtn = card.querySelector('[data-act="sell"]');
+    sellBtn.disabled = have <= 0;
+
+    if(it._eventFlash){
+      card.classList.remove("event-hit");
+      void card.offsetWidth;
+      card.classList.add("event-hit", it._eventFlash==="surge"?"flash-up":"flash-down");
+      setTimeout(()=>card.classList.remove("flash-up","flash-down"), 700);
+    }
+
+    drawSpark(document.getElementById("spark-"+it.id), it.history, dirColor);
+  });
+}
+
+function renderTicker(){
+  const track = document.getElementById("tickerTrack");
+  const build = () => items.map(it=>{
+    const delta = it.price - it.prevPrice;
+    const dir = delta>0?"up":delta<0?"down":"flat";
+    const arrow = delta>0?"▲":delta<0?"▼":"—";
+    return `<span class="ticker-item"><span class="nm">${it.emoji} ${it.name}</span><span class="${dir}">${won(it.price)} ${arrow}</span></span>`;
+  }).join("");
+  const html = build();
+  track.innerHTML = html + html; // 이음새 없는 무한 스크롤용 2배 복제
+}
+
+/* ========================= 리더보드 (Apps Script 연동) ========================= */
+async function pushScore(){
+  if(!APPS_SCRIPT_URL || !player.name) return;
+  try{
+    await fetch(APPS_SCRIPT_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain" },
+      body: JSON.stringify({ action:"update", name:player.name, total: Math.round(totalPortfolio()) })
+    });
+    document.getElementById("lbStatus").textContent = "실시간 연결됨";
+  }catch(e){
+    document.getElementById("lbStatus").textContent = "연결 오류 · 재시도 중";
+  }
+}
+
+async function fetchLeaderboard(){
+  const listEl = document.getElementById("leaderboardList");
+  if(!APPS_SCRIPT_URL){
+    // 백엔드 미설정: 로컬 1인 순위만 표시
+    renderLeaderboardRows([{ name: player.name || "나", total: totalPortfolio() }]);
+    document.getElementById("lbStatus").textContent = "백엔드 미연결 · 로컬 모드";
+    return;
+  }
+  try{
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=leaderboard`);
+    const data = await res.json();
+    renderLeaderboardRows(data.rows || []);
+    document.getElementById("lbStatus").textContent = "실시간 연결됨";
+  }catch(e){
+    document.getElementById("lbStatus").textContent = "연결 오류 · 재시도 중";
+  }
+}
+
+function renderLeaderboardRows(rows){
+  const listEl = document.getElementById("leaderboardList");
+  if(!rows.length){ listEl.innerHTML = '<div class="lb-empty">아직 순위 데이터가 없습니다</div>'; return; }
+  rows.sort((a,b)=>b.total-a.total);
+  listEl.innerHTML = rows.slice(0,20).map((r,i)=>`
+    <div class="lb-row ${r.name===player.name?'me':''}">
+      <div class="lb-rank">${i+1}</div>
+      <div class="lb-name">${escapeHtml(r.name)}</div>
+      <div class="lb-val mono">${won(r.total)}</div>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ========================= 이벤트 바인딩 ========================= */
+document.getElementById("itemsGrid").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-act]");
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const qtyInput = document.getElementById("qty-"+id);
+  const qty = parseInt(qtyInput.value,10) || 1;
+  if(btn.dataset.act === "buy") buy(id, qty);
+  else sell(id, qty);
+});
+
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("nameInput").addEventListener("keydown", e=>{
+  if(e.key === "Enter") startGame();
+});
+
+function startGame(){
+  const input = document.getElementById("nameInput");
+  const name = input.value.trim();
+  if(!name){ input.focus(); input.style.borderColor="var(--down)"; return; }
+  player.name = name;
+  document.getElementById("nameModal").style.display = "none";
+
+  renderItems();
+  renderWallet();
+  renderTicker();
+  fetchLeaderboard();
+
+  setInterval(tickPrices, TICK_MS);
+  setInterval(()=>{ pushScore(); fetchLeaderboard(); }, LB_POLL_MS);
+  scheduleNextEvent();
+}
+
+/* 초기 렌더 (모달 뒤에서 대기) */
+renderItems();
+renderWallet();
+renderTicker();
+</script>
+</body>
+</html>

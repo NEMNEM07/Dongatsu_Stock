@@ -943,6 +943,12 @@ async function pollMaintenance(){
 pollMaintenance(); // 페이지 로드 즉시 1회 확인 (입장 모달 뜨기 전에도 점검이면 바로 덮임)
 setInterval(pollMaintenance, MAINTENANCE_POLL_MS);
 
+// 백그라운드 탭에서는 setInterval이 브라우저에 의해 느려질 수 있어서,
+// 탭이 다시 활성화되는 순간 곧바로 한 번 더 확인 (다른 탭 보다가 돌아왔을 때 즉시 반영)
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "visible") pollMaintenance();
+});
+
 /* ========================= 이벤트 바인딩 ========================= */
 document.getElementById("itemsGrid").addEventListener("click", e=>{
   const modeBtn = e.target.closest("button.mode-btn");

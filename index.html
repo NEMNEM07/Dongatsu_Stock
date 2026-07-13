@@ -280,8 +280,9 @@
   <div class="modal-card">
     <div class="eyebrow">Donkatsu Exchange</div>
     <h2>돈까스거래소 입장</h2>
-    <p>이름을 입력하고 예측 트레이딩을 시작하세요</p>
+    <p>이름과 비밀번호를 입력하세요. 처음이면 자동으로 계정이 생성되고, 이미 있는 이름이면 비밀번호로 이어서 할 수 있어요</p>
     <input id="nameInput" maxlength="10" placeholder="닉네임 (최대 10자)" autocomplete="off">
+    <input id="passwordInput" type="password" maxlength="20" placeholder="비밀번호" autocomplete="off">
     <div class="modal-error" id="nameError"></div>
     <button id="startBtn">입장하기</button>
     <div class="starting">기초 자금 100,000원 지급</div>
@@ -361,7 +362,7 @@ const EVENT_TEMPLATES = [
 ];
 
 /* ========================= 상태 ========================= */
-let player = { name:"", cash:STARTING_CASH, holdings:{} };
+let player = { name:"", password:"", cash:STARTING_CASH, holdings:{} };
 let items = ITEM_DEFS.map(d => ({ ...d, prevPrice:d.price, history:[d.price] }));
 let sparkCtxCache = {};
 
@@ -563,7 +564,14 @@ async function pushScore(){
     await fetch(APPS_SCRIPT_URL, {
       method:"POST",
       headers:{ "Content-Type":"text/plain" },
-      body: JSON.stringify({ action:"update", name:player.name, total: Math.round(totalPortfolio()) })
+      body: JSON.stringify({
+        action:"update",
+        name:player.name,
+        password:player.password,
+        cash: Math.round(player.cash),
+        holdings: player.holdings,
+        total: Math.round(totalPortfolio())
+      })
     });
     document.getElementById("lbStatus").textContent = "실시간 연결됨";
   }catch(e){
@@ -624,33 +632,41 @@ document.getElementById("nameInput").addEventListener("keydown", e=>{
 
 async function startGame(){
   const input = document.getElementById("nameInput");
+  const pwInput = document.getElementById("passwordInput");
   const errEl = document.getElementById("nameError");
   const btn = document.getElementById("startBtn");
   const name = input.value.trim();
+  const password = pwInput.value;
   errEl.textContent = "";
 
   if(!name){ input.focus(); input.style.borderColor="var(--down)"; errEl.textContent="이름을 입력해주세요"; return; }
+  if(!password){ pwInput.focus(); pwInput.style.borderColor="var(--down)"; errEl.textContent="비밀번호를 입력해주세요"; return; }
   input.style.borderColor = "";
+  pwInput.style.borderColor = "";
 
   btn.disabled = true;
   btn.textContent = "확인 중...";
+
+  let restored = null;
 
   if(APPS_SCRIPT_URL){
     try{
       const res = await fetch(APPS_SCRIPT_URL, {
         method:"POST",
         headers:{ "Content-Type":"text/plain" },
-        body: JSON.stringify({ action:"join", name })
+        body: JSON.stringify({ action:"join", name, password })
       });
       const data = await res.json();
       if(!data.ok){
-        errEl.textContent = data.error === "taken"
-          ? "이미 사용 중인 이름이에요. 다른 이름을 입력해주세요"
+        errEl.textContent = data.error === "wrong_password"
+          ? "비밀번호가 틀렸어요"
           : "입장에 실패했어요. 다시 시도해주세요";
+        pwInput.style.borderColor = "var(--down)";
         btn.disabled = false;
         btn.textContent = "입장하기";
         return;
       }
+      restored = data;
     }catch(e){
       errEl.textContent = "서버 연결에 실패했어요. 다시 시도해주세요";
       btn.disabled = false;
@@ -660,12 +676,22 @@ async function startGame(){
   }
 
   player.name = name;
+  player.password = password;
+  if(restored && restored.existing){
+    player.cash = Number(restored.cash) || STARTING_CASH;
+    player.holdings = restored.holdings || {};
+  }
+
   document.getElementById("nameModal").style.display = "none";
 
   renderItems();
   renderWallet();
   renderTicker();
   fetchLeaderboard();
+
+  if(restored && restored.existing){
+    showEventBanner(`다시 오셨네요! 기존 자산 ${won(totalPortfolio())} 불러왔어요`);
+  }
 
   setInterval(tickPrices, TICK_MS);
   setInterval(()=>{ pushScore(); fetchLeaderboard(); }, LB_POLL_MS);

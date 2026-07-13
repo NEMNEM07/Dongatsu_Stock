@@ -360,6 +360,53 @@
   .fund-row-amount{color:var(--cream-dim);flex:1;text-align:right;}
   .fund-row-timer{color:var(--gold-bright);flex-shrink:0;}
   .fund-empty{color:var(--cream-dim);font-size:11.5px;text-align:center;padding:8px 0;}
+
+  .lottery-board{ position:static; margin-bottom:18px; }
+  .lottery-buy-btn{
+    width:100%;padding:12px;border:none;border-radius:8px;
+    background:linear-gradient(135deg,#c1442e,var(--gold));
+    color:#1a1305;font-weight:800;font-size:13px;cursor:pointer;
+    transition:filter .15s ease, transform .08s ease;
+  }
+  .lottery-buy-btn:hover:not(:disabled){filter:brightness(1.08);}
+  .lottery-buy-btn:active:not(:disabled){transform:scale(.97);}
+  .lottery-buy-btn:disabled{background:var(--ink-900);color:var(--cream-dim);cursor:not-allowed;}
+  .lottery-scratch-area{
+    margin-top:12px;text-align:center;
+    background:var(--ink-900);border:1px solid var(--line);border-radius:10px;
+    padding:16px 10px;
+  }
+  .lottery-card{
+    font-size:32px;margin-bottom:10px;min-height:40px;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .15s ease;
+  }
+  .lottery-card.scratching{animation:scratchShake .12s linear infinite;}
+  .lottery-card.win{color:var(--up);animation:winPop .5s ease;}
+  .lottery-card.big-win{color:var(--gold-bright);animation:winPop .6s ease infinite alternate;text-shadow:0 0 16px rgba(230,195,79,.7);}
+  .lottery-card.lose{color:var(--cream-dim);}
+  @keyframes scratchShake{
+    0%{transform:translateX(-2px) rotate(-2deg);}
+    50%{transform:translateX(2px) rotate(2deg);}
+    100%{transform:translateX(-2px) rotate(-2deg);}
+  }
+  @keyframes winPop{
+    0%{transform:scale(.8);}
+    60%{transform:scale(1.15);}
+    100%{transform:scale(1);}
+  }
+  .lottery-scratch-btn{
+    width:100%;padding:10px;border:none;border-radius:8px;
+    background:var(--gold);color:#1a1305;font-weight:800;font-size:13px;
+    cursor:pointer;
+  }
+  .lottery-scratch-btn:hover:not(:disabled){filter:brightness(1.08);}
+  .lottery-scratch-btn:disabled{background:var(--ink-800);color:var(--cream-dim);cursor:not-allowed;}
+  .lottery-result{
+    margin-top:10px;font-size:12px;text-align:center;color:var(--cream-dim);
+    min-height:14px;
+  }
+  .lottery-result b{color:var(--gold-bright);}
   .modal-card button.secondary{
     background:transparent;border:1px solid var(--line);
     color:var(--cream-dim);margin-top:10px;
@@ -740,6 +787,24 @@
       <div id="fundActiveList" class="fund-active-list"><div class="fund-empty">진행 중인 투자가 없어요</div></div>
     </div>
 
+    <div class="board lottery-board">
+      <h3 class="board-title" style="margin-bottom:10px;">복권</h3>
+      <p class="board-sub" style="margin-bottom:10px;">1등 상금은 구매가의 <b>500배</b>! 확률은 진짜 복권처럼 극악이에요.</p>
+      <select id="lotteryPriceSelect" class="fund-select">
+        <option value="10000">10,000원권</option>
+        <option value="100000">100,000원권</option>
+        <option value="1000000">1,000,000원권</option>
+        <option value="10000000">10,000,000원권</option>
+        <option value="100000000">100,000,000원권</option>
+      </select>
+      <button id="lotteryBuyBtn" class="lottery-buy-btn">복권 구매하기</button>
+      <div id="lotteryScratchArea" class="lottery-scratch-area" style="display:none;">
+        <div class="lottery-card" id="lotteryCard">🎫</div>
+        <button id="lotteryScratchBtn" class="lottery-scratch-btn">긁기!</button>
+      </div>
+      <div id="lotteryResult" class="lottery-result"></div>
+    </div>
+
     <div class="board">
       <h3 class="board-title" style="margin-bottom:14px;">실시간 순위</h3>
       <div id="leaderboardList"><div class="lb-empty">불러오는 중...</div></div>
@@ -791,6 +856,13 @@
 
     <div class="patch-entry">
       <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
+      <ul>
+        <li>🎫 <b>복권</b> 추가 — 1만/10만/100만/1천만/1억원권, 1등 상금 구매가의 500배(확률 100만분의 1). "긁기!"로 결과 확인. 평균 기대값 약 44%로 실제 복권처럼 설계</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
       <ul>
         <li>🪙 코인 방향 편향(마이너스 드리프트) 제거 — 순수 랜덤 50/50으로 변경, 대신 수수료+강제회전으로 평균 손실 유도 ("숏만 치면 이김" 공략 방지)</li>
         <li>⛔ <b>사이드카</b> 도입 — 한 틱에 ±15% 이상 급변하면 그 종목 1분간 거래정지</li>
@@ -973,6 +1045,11 @@
     </div>
 
     <div class="guide-section">
+      <h3>🎫 복권</h3>
+      <p>1만/10만/100만/1천만/1억원권 중 골라 구매하면 즉시 등수가 정해지고, <b>"긁기!"</b> 버튼으로 결과를 확인해요. 1등은 구매가의 <b>500배</b>지만 확률이 100만분의 1로 극악이에요. 평균적으로는 손해가 나게 설계돼있어요 (실제 복권처럼요) — 재미로만 즐기세요.</p>
+    </div>
+
+    <div class="guide-section">
       <h3>🎲 랜덤 이벤트</h3>
       <p>3분마다 접속 중인 사람 한 명이 무작위로 뽑혀서 이벤트를 겪어요: 알바/주식/코인 수익률 증가(소액), 다른 사람 돈 훔치기, 조세회피 과징금(고액) 중 하나예요. 화면에 누구한테 무슨 일이 일어났는지 배너로 떠요.</p>
     </div>
@@ -995,7 +1072,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-27";
+const BUILD_VERSION = "v2026-07-13-28";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1795,6 +1872,84 @@ function renderFundPanel(){
 }
 
 setInterval(()=>{ checkFundResolutions(); renderFundPanel(); }, 1000);
+
+/* ========================= 복권 ========================= */
+// 등수별 확률/배당 - 실제 복권처럼 1등은 극악확률, 전체 기대값(EV)은 약 44%(=평균적으로 손해)
+const LOTTERY_TIERS = [
+  { name:"1등", mult:500, prob:1/1000000 },
+  { name:"2등", mult:50,  prob:1/50000 },
+  { name:"3등", mult:10,  prob:1/2000 },
+  { name:"4등", mult:3,   prob:1/200 },
+  { name:"5등", mult:1,   prob:0.26 },
+  { name:"6등", mult:0.4, prob:0.40 },
+];
+let pendingLottery = null; // { price, tier, payout }
+
+function drawLotteryTier(){
+  const roll = Math.random();
+  let cum = 0;
+  for(const t of LOTTERY_TIERS){
+    cum += t.prob;
+    if(roll < cum) return t;
+  }
+  return null; // 꽝
+}
+
+function buyLottery(){
+  if(pendingLottery){ showEventBanner("🎫 먼저 긁어서 결과를 확인해주세요"); return; }
+  const price = parseInt(document.getElementById("lotteryPriceSelect").value, 10) || 0;
+  if(price > player.cash){ showEventBanner("💸 복권 살 돈이 부족해요"); return; }
+
+  player.cash -= price;
+  const tier = drawLotteryTier();
+  const payout = tier ? Math.round(price * tier.mult) : 0;
+  pendingLottery = { price, tier, payout };
+
+  document.getElementById("lotteryBuyBtn").disabled = true;
+  document.getElementById("lotteryResult").textContent = "";
+  const area = document.getElementById("lotteryScratchArea");
+  const card = document.getElementById("lotteryCard");
+  card.className = "lottery-card";
+  card.textContent = "🎫";
+  area.style.display = "block";
+  document.getElementById("lotteryScratchBtn").disabled = false;
+
+  renderWallet();
+  pushScore();
+}
+
+function scratchLottery(){
+  if(!pendingLottery) return;
+  const scratchBtn = document.getElementById("lotteryScratchBtn");
+  scratchBtn.disabled = true;
+  const card = document.getElementById("lotteryCard");
+  card.className = "lottery-card scratching";
+  card.textContent = "긁는 중...";
+
+  setTimeout(()=>{
+    const { price, tier, payout } = pendingLottery;
+    if(tier){
+      player.cash += payout;
+      card.className = "lottery-card " + (tier.mult >= 10 ? "big-win" : "win");
+      card.textContent = tier.mult >= 10 ? "🎉💰🎉" : "🎊";
+      document.getElementById("lotteryResult").innerHTML = `<b>${tier.name} 당첨!</b> ${won(payout)} 획득 (x${tier.mult})`;
+      showEventBanner(`🎫 복권 ${tier.name} 당첨! ${won(payout)} 획득했어요`);
+    } else {
+      card.className = "lottery-card lose";
+      card.textContent = "😭 꽝";
+      document.getElementById("lotteryResult").textContent = `꽝... ${won(price)} 날아갔어요`;
+    }
+    renderWallet();
+    pushScore();
+    pendingLottery = null;
+    document.getElementById("lotteryBuyBtn").disabled = false;
+    setTimeout(()=>{ document.getElementById("lotteryScratchArea").style.display = "none"; }, 3000);
+  }, 1200);
+}
+
+document.getElementById("lotteryBuyBtn").addEventListener("click", buyLottery);
+document.getElementById("lotteryScratchBtn").addEventListener("click", scratchLottery);
+
 
 // 카드에 롱/숏 만기까지 남은 시간 표시 (일반 종목은 숏만, 코인은 롱/숏 둘 다 해당될 수 있음)
 function renderShortTimers(){

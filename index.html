@@ -207,6 +207,28 @@
     position:sticky;top:70px;
   }
   .job-board{ position:static; margin-bottom:18px; }
+  .bankruptcy-board{ position:static; margin-bottom:18px; }
+  .bankruptcy-btn{
+    width:100%;padding:14px 12px;
+    background:var(--down);color:#2b0d06;
+    border:none;border-radius:10px;
+    font-weight:800;font-size:14px;cursor:pointer;
+    transition:filter .15s ease, transform .08s ease;
+    letter-spacing:.01em;
+  }
+  .bankruptcy-btn:hover:not(:disabled){filter:brightness(1.1);}
+  .bankruptcy-btn:active:not(:disabled){transform:scale(.97);}
+  .bankruptcy-btn:disabled{
+    background:var(--ink-900);color:var(--cream-dim);
+    border:1px solid var(--line);cursor:not-allowed;
+  }
+  .modal-card button.secondary{
+    background:transparent;border:1px solid var(--line);
+    color:var(--cream-dim);margin-top:10px;
+  }
+  .modal-card button.secondary:hover{border-color:var(--cream-dim);filter:none;color:var(--cream);}
+  .modal-card button.danger{background:var(--down);color:#2b0d06;}
+
 
   .job-toast-wrap{ position:relative; height:0; }
   .job-toast{
@@ -445,11 +467,27 @@
       <div class="job-earned mono" id="jobEarnedTotal">알바 수익 ₩0</div>
     </div>
 
+    <div class="board bankruptcy-board">
+      <h3 class="board-title" style="margin-bottom:10px;">파산 신청</h3>
+      <p class="board-sub" style="margin-bottom:14px;">평가 자산이 마이너스가 되면 신청할 수 있어요. 신청하면 모든 포지션이 정리되고 50,000원으로 다시 시작해요.</p>
+      <button id="bankruptcyBtn" class="bankruptcy-btn" disabled>파산 신청하기</button>
+    </div>
+
     <div class="board">
       <h3 class="board-title" style="margin-bottom:14px;">실시간 순위</h3>
       <div id="leaderboardList"><div class="lb-empty">불러오는 중...</div></div>
       <div class="lb-status" id="lbStatus">연결 대기 중</div>
     </div>
+  </div>
+</div>
+
+<div id="bankruptcyModal" class="full-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="eyebrow">Donkatsu Exchange</div>
+    <h2>💥 파산 신청</h2>
+    <p>보유·숏 포지션이 모두 정리되고 자금이 <b>50,000원</b>으로 초기화돼요. 정말 신청할까요?</p>
+    <button id="bankruptcyConfirmBtn" class="danger">신청하기</button>
+    <button id="bankruptcyCancelBtn" class="secondary">취소</button>
   </div>
 </div>
 
@@ -489,7 +527,7 @@
 
     <div class="guide-section">
       <h3>🍽️ 알바</h3>
-      <p>시세가 안 움직여서 심심할 때, 사이드바의 알바 버튼을 눌러보세요. 클릭 한 번에 100~200원을 랜덤으로 벌 수 있어요. 다만 <b>1초 쿨다운</b>이 있어서 너무 빠르게 연타는 안 돼요.</p>
+      <p>시세가 안 움직여서 심심할 때, 사이드바의 알바 버튼을 눌러보세요. 클릭 한 번에 300~700원을 랜덤으로 벌 수 있어요. 다만 <b>0.5초 쿨다운</b>이 있어서 너무 빠르게 연타는 안 돼요.</p>
     </div>
 
     <div class="guide-section">
@@ -522,6 +560,7 @@ const JOB_COOLDOWN_MS = 1000;   // 알바 버튼 쿨다운 (매크로/연타 방
 const JOB_MIN_EARN = 100;
 const JOB_MAX_EARN = 200;
 const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
+const BANKRUPTCY_CASH = 50000; // 파산 신청 시 재지급되는 금액 (시작 자금보다 적은 페널티)
 
 const ITEM_DEFS = [
   { id:"yanghojae", name:"양호재의 초울트라 레전드 양호재급 돈까스", emoji:"🏆", price:22000, vol:0.030 },
@@ -845,13 +884,40 @@ guideModal.addEventListener("click", (e) => {
   if(e.target === guideModal) guideModal.style.display = "none"; // 바깥 배경 클릭 시 닫힘
 });
 document.addEventListener("keydown", (e) => {
-  if(e.key === "Escape" && guideModal.style.display === "flex") guideModal.style.display = "none";
+  if(e.key !== "Escape") return;
+  if(guideModal.style.display === "flex") guideModal.style.display = "none";
+  if(bankruptcyModal.style.display === "flex") bankruptcyModal.style.display = "none";
+});
+
+/* ========================= 파산 신청 ========================= */
+const bankruptcyModal = document.getElementById("bankruptcyModal");
+
+document.getElementById("bankruptcyBtn").addEventListener("click", () => {
+  if(totalPortfolio() >= 0) return; // 방어: 버튼이 잠깐 풀려있는 타이밍 노려도 조건 재확인
+  bankruptcyModal.style.display = "flex";
+});
+document.getElementById("bankruptcyCancelBtn").addEventListener("click", () => {
+  bankruptcyModal.style.display = "none";
+});
+document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => {
+  player.cash = BANKRUPTCY_CASH;
+  player.holdings = {};
+  bankruptcyModal.style.display = "none";
+  renderItems();
+  renderWallet();
+  showEventBanner("💥 파산 신청 완료 — 50,000원으로 다시 시작합니다");
+  pushScore(); // 서버에 바로 반영
+});
+bankruptcyModal.addEventListener("click", (e) => {
+  if(e.target === bankruptcyModal) bankruptcyModal.style.display = "none";
 });
 
 /* ========================= 렌더링 ========================= */
 function renderWallet(){
   document.getElementById("totalValue").textContent = won(totalPortfolio());
   document.getElementById("cashValue").textContent = "현금 " + won(player.cash);
+  const bankruptcyBtn = document.getElementById("bankruptcyBtn");
+  if(bankruptcyBtn) bankruptcyBtn.disabled = totalPortfolio() >= 0;
 }
 
 function drawSpark(canvas, history, dirColor){

@@ -575,7 +575,7 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
-const EVENT_PROB = 0.11;       // 틱마다 이벤트가 발생할 확률 (평균 ~9틱=27초 간격)
+const EVENT_PROB = 0.25;        // 틱마다 이벤트가 발생할 확률 (평균 ~3.3틱=10초 간격)
 const EPOCH = Date.UTC(2026, 6, 13, 0, 0, 0); // 모든 클라이언트가 공유하는 기준 시각 (배포 전 오늘 날짜로 맞춰두면 됨)
 const STARTING_CASH = 100000;
 const LB_POLL_MS = 5000;       // 리더보드 갱신 주기

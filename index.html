@@ -1461,7 +1461,22 @@ function processTick(tick, silent){
     for(const it of items) it._eventFlash = null;
   }
 }
+  
+setInterval(checkNotice, 5000);
 
+let lastNoticeTime = 0;
+
+async function checkNotice() {
+    const res = await fetch(APPS_SCRIPT_URL + "?action=notice");
+    const data = await res.json();
+
+    if (!data.notice) return;
+
+    if (data.notice.time !== lastNoticeTime) {
+        lastNoticeTime = data.notice.time;
+        alert(data.notice.message);
+    }
+}
 // simTick부터 targetTick까지 순서대로 따라잡음. 처음 입장 시 과거 틱을 몰아서 계산할 때는 silent=true로 배너 생략.
 function catchUpTo(targetTick, silent){
   while(simTick < targetTick){

@@ -740,7 +740,7 @@
 
     <div class="board bankruptcy-board">
       <h3 class="board-title" style="margin-bottom:10px;">파산 신청</h3>
-      <p class="board-sub" style="margin-bottom:14px;">평가 자산이 마이너스가 되면 신청할 수 있어요. 신청하면 모든 포지션이 정리되고 50,000원으로 다시 시작해요.</p>
+      <p class="board-sub" style="margin-bottom:14px;">평가 자산이 마이너스가 되면 신청할 수 있어요. 신청하면 모든 포지션이 정리되고 50,000원으로 다시 시작해요. (재신청은 <b>5분</b> 쿨타임)</p>
       <button id="bankruptcyBtn" class="bankruptcy-btn" disabled>파산 신청하기</button>
     </div>
 
@@ -840,14 +840,7 @@
     <p style="font-size:13px;color:var(--cream-dim);margin:0;">돈까스거래소가 업데이트된 내역이에요.</p>
 
     <div class="patch-entry">
-      <div class="patch-date">2026.07.14 <span class="patch-tag">NEW</span></div>
-      <ul>
-        <li>🐛 <b>코인 레버리지 롱 타임어택 버그 수정</b> — 25초 만기로 강제 청산될 때 레버리지 부채를 상환하지 않고 전액 현금으로 지급되던 문제 수정. 이제 다른 청산 로직과 동일하게 매도 대금에서 부채를 먼저 차감한 뒤 정산돼요 (레버리지로 "공짜 이득"이 나던 버그 제거)</li>
-      </ul>
-    </div>
-
-    <div class="patch-entry">
-      <div class="patch-date">2026.07.13</div>
+      <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
       <ul>
         <li>🎫 <b>복권</b> 추가 — 1만/10만/100만/1천만/1억원권, 1등 상금 구매가의 500배(확률 100만분의 1). "긁기!"로 결과 확인. 평균 기대값 약 44%로 실제 복권처럼 설계</li>
       </ul>
@@ -868,8 +861,8 @@
       <div class="patch-date">2026.07.13</div>
       <ul>
         <li>🍽️ <b>알바 수익 밸런스 조정</b> — 고레벨일수록 너무 잘 벌리던 문제를 완화 (성장폭 축소)</li>
-        <li>💼 <b>헤지펀드</b> 신설 — 호재/릉환/정근/종학/병권 펀드 중 골라 투자, 1시간 뒤 수익률에 따라 자동 정산</li>
-        <li>🪙 <b>돈까스 코인</b> 4종 신설 (프로틴/ESG/500원/덩크 코인) — 변동성이 훨씬 크고, <b>롱·숏 모두 25초 타임어택 만기</b>, 레버리지·숏 한도 5배</li>
+        <li>💼 <b>헤지펀드</b> 신설 — 호재/릉환/정근/종학/병권 펀드 중 골라 투자, 10분 뒤 수익률에 따라 자동 정산</li>
+        <li>🪙 <b>돈까스 코인</b> 4종 신설 (프로틴/ESG/500원/덩크 코인) — 변동성이 훨씬 크고, <b>롱·숏 모두 45초 타임어택 만기</b>, 레버리지·숏 한도 5배</li>
         <li>계열 필터에 "코인" 카테고리 추가</li>
       </ul>
     </div>
@@ -1015,7 +1008,7 @@
       <h3>🪙 돈까스 코인</h3>
       <p>일반 돈까스보다 <b>변동성이 훨씬 큰</b> 4종의 코인이에요 (프로틴/ESG/500원/덩크 코인). 계열 필터의 "코인"을 눌러 모아볼 수 있어요.</p>
       <ul>
-        <li><b>롱과 숏 모두 25초 타임어택 만기</b>가 있어요 — 사고 나서 오래 들고 있을 수 없고, 시간 지나면 그 순간 시장가로 강제 매도/청산돼요</li>
+        <li><b>롱과 숏 모두 45초 타임어택 만기</b>가 있어요 — 사고 나서 오래 들고 있을 수 없고, 시간 지나면 그 순간 시장가로 강제 매도/청산돼요</li>
         <li>레버리지 한도와 숏 노출 한도가 <b>5배</b>까지로 일반 종목보다 훨씬 크게 열려있어요</li>
         <li>대신 거래할 때마다 <b>추가 수수료 1%</b>가 더 붙어요</li>
         <li>가격이 오르내리는 방향 자체엔 유불리가 없어요(순수 랜덤). 대신 수수료 + 강제 회전 때문에 자주 들락날락할수록 평균적으로 손해가 쌓이기 쉬워요</li>
@@ -1065,7 +1058,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-14-31";
+const BUILD_VERSION = "v2026-07-13-31";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1104,8 +1097,9 @@ function jobUpgradeCost(){
 }
 const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
 const BANKRUPTCY_CASH = 50000; // 파산 신청 시 재지급되는 금액 (시작 자금보다 적은 페널티)
-const BANKRUPTCY_COOLDOWN_MS = 10 * 60 * 1000; // 10분
+const BANKRUPTCY_COOLDOWN_MS = 300000; // 파산 재신청까지 5분 쿨타임
 let lastBankruptcyAt = 0;
+
 /* ========================= 환생 ========================= */
 const REBIRTH_THRESHOLD = 50000000;      // 첫 환생 가능 최소 총자산 (5,000만원)
 const REBIRTH_THRESHOLD_GROWTH = 1.5;   // 환생할 때마다 다음 기준이 이 배율만큼 늘어남
@@ -1215,7 +1209,7 @@ const EVENT_TEMPLATES = [
 ];
 
 /* ========================= 상태 ========================= */
-let player = { name:"", password:"", cash:STARTING_CASH, holdings:{}, jobLevel:1, shortExpiry:{}, marginDebt:{}, rebirthCount:0, avgCost:{}, longExpiry:{}, fundInvestments:[] };
+let player = { name:"", password:"", cash:STARTING_CASH, holdings:{}, jobLevel:1, shortExpiry:{}, marginDebt:{}, rebirthCount:0, avgCost:{}, longExpiry:{}, fundInvestments:[], shortProceeds:{} };
 let cardMode = {}; // { itemId: 'long' | 'short' } 카드별 현재 거래 모드 (기본 롱)
 let jobEarnedTotal = 0;
 let lastJobClickAt = 0; // performance.now() 기준, 쿨다운 판정용 (버튼 disabled 조작에 대한 이중 방어)
@@ -1251,8 +1245,15 @@ const clampPrice = (p, it) => Math.min(it.ceiling, Math.max(it.floor, Math.round
 function totalPortfolio(){
   let v = player.cash;
   for(const it of items){ v += (player.holdings[it.id]||0) * it.price; }
+  v += totalShortProceedsAll(); // 숏 매도대금은 예치금으로 잡혀있다가 커버 시 정산됨 - 총자산 계산엔 포함
   v -= totalMarginDebtAll();
   return v;
+}
+
+function totalShortProceedsAll(){
+  let sum = 0;
+  for(const id in player.shortProceeds) sum += player.shortProceeds[id] || 0;
+  return sum;
 }
 
 function totalMarginDebtAll(){
@@ -1409,6 +1410,7 @@ function processTick(tick, silent){
           delete player.avgCost[it.id];
           delete player.shortExpiry[it.id];
           delete player.longExpiry[it.id];
+          delete player.shortProceeds[it.id];
           showEventBanner(`💀 ${it.name} 상장폐지! 보유하고 있던 물량이 전부 사라졌어요`);
           pushScore();
         } else {
@@ -1551,7 +1553,8 @@ function sendFinalStateBeacon(){
     jobLevel: player.jobLevel,
     marginDebt: player.marginDebt,
     rebirthCount: player.rebirthCount,
-    fundInvestments: player.fundInvestments
+    fundInvestments: player.fundInvestments,
+    shortProceeds: player.shortProceeds
   });
   navigator.sendBeacon(APPS_SCRIPT_URL, new Blob([payload], { type: "text/plain" }));
 }
@@ -1691,7 +1694,8 @@ function shortSell(id, qty){
   const feeRate = SHORT_FEE_RATE + (isCoin ? COIN_EXTRA_FEE_RATE : 0);
   const grossProceeds = it.price * qty;
   const fee = Math.round(grossProceeds * feeRate);
-  player.cash += grossProceeds - fee; // 진입 수수료만큼 덜 받음
+  player.cash -= fee; // 수수료만 즉시 현금에서 차감
+  player.shortProceeds[id] = (player.shortProceeds[id] || 0) + grossProceeds; // 매도대금은 현금이 아니라 예치금으로 보관 (커버할 때 정산됨 - 다른 데 쓸 수 없음)
   player.holdings[id] = have - qty;
   player.shortExpiry[id] = Date.now() + (isCoin ? COIN_SHORT_MATURITY_MS : SHORT_MATURITY_MS); // 진입/추가할 때마다 만기 타이머 갱신
   markTraded();
@@ -1735,16 +1739,23 @@ function coverShort(id, qty){
   const have = player.holdings[id]||0;
   if(have >= 0) return;
 
+  qty = Math.min(qty, -have); // 숏 수량 이상은 커버 불가 (그 이상 롱 전환은 매수로 별도)
   const isCoin = it.sector === "coin";
   const unitCost = it.price * (1 + (isCoin ? COIN_EXTRA_FEE_RATE : 0));
-  qty = Math.min(qty, -have);
-  const maxAffordable = Math.floor(player.cash / unitCost);
-  qty = Math.min(qty, maxAffordable);
-  if(qty <= 0) return flashCard(id, "insufficient");
+  const totalCost = Math.round(unitCost * qty);
 
-  player.cash -= Math.round(unitCost * qty);
+  // 예치금(shortProceeds)에서 비율만큼 정산하고, 부족분/잉여분은 현금에 그대로 반영
+  // 현금이 부족해도 막지 않고 그냥 마이너스로 처리함 (숏은 원래 위험한 포지션이라 강제 집행)
+  const shortQtyBefore = -have;
+  const proceedsHeld = player.shortProceeds[id] || 0;
+  const proceedsRelease = shortQtyBefore > 0 ? Math.round(proceedsHeld * (qty / shortQtyBefore)) : 0;
+
+  player.cash += proceedsRelease - totalCost;
+  const remainProceeds = proceedsHeld - proceedsRelease;
+  if(remainProceeds > 0) player.shortProceeds[id] = remainProceeds; else delete player.shortProceeds[id];
+
   player.holdings[id] = have + qty;
-  if(player.holdings[id] >= 0) delete player.shortExpiry[id];
+  if(player.holdings[id] >= 0){ delete player.shortExpiry[id]; delete player.shortProceeds[id]; }
   markTraded();
   renderItems(); renderWallet();
   pushScore();
@@ -1755,13 +1766,15 @@ function coverShort(id, qty){
 function forceLiquidateShort(itemId){
   const it = items.find(i=>i.id===itemId);
   const have = player.holdings[itemId] || 0;
-  if(!it || have >= 0){ delete player.shortExpiry[itemId]; return; }
+  if(!it || have >= 0){ delete player.shortExpiry[itemId]; delete player.shortProceeds[itemId]; return; }
 
   const qty = -have;
   const cost = it.price * qty;
-  player.cash -= cost;
+  const proceedsHeld = player.shortProceeds[itemId] || 0;
+  player.cash += proceedsHeld - cost; // 예치금 정산 + 차액을 현금에 반영 (부족해도 마이너스 허용)
   player.holdings[itemId] = 0;
   delete player.shortExpiry[itemId];
+  delete player.shortProceeds[itemId];
   showEventBanner(`⏰ ${it.name} 숏 포지션 만기! ${won(cost)}에 강제 청산됐어요`);
 }
 
@@ -1779,24 +1792,18 @@ function checkShortExpiries(){
 
 /* ========================= 코인 롱 타임어택 만기 강제청산 ========================= */
 // 코인은 롱도 시간이 지나면 강제로 시장가 매도됨 (타임어택)
-// [수정] 레버리지 부채(marginDebt)를 상환하지 않고 전액 현금 지급되던 버그를 고쳐,
-// 다른 청산 로직(sell, forceLiquidateLong)과 동일하게 매도 대금에서 부채를 먼저 차감함
 function forceLiquidateCoinLong(itemId){
   const it = items.find(i=>i.id===itemId);
   const have = player.holdings[itemId] || 0;
   if(!it || have <= 0){ delete player.longExpiry[itemId]; return; }
 
-  const debt = player.marginDebt[itemId] || 0;
   const feeRate = TRADE_FEE_RATE + COIN_EXTRA_FEE_RATE;
-  const grossProceeds = Math.round(it.price * have * (1 - feeRate));
-  const netProceeds = grossProceeds - debt; // 부채부터 상환한 뒤 순수령액만 현금으로 지급
-
-  player.cash += netProceeds;
-  delete player.marginDebt[itemId];
+  const proceeds = Math.round(it.price * have * (1 - feeRate));
+  player.cash += proceeds;
   player.holdings[itemId] = 0;
   delete player.avgCost[itemId];
   delete player.longExpiry[itemId];
-  showEventBanner(`⏰ ${it.name} 타임어택 만기! ${won(netProceeds)}에 강제 매도됐어요`);
+  showEventBanner(`⏰ ${it.name} 타임어택 만기! ${won(proceeds)}에 강제 매도됐어요`);
 }
 
 function checkLongExpiries(){
@@ -1822,7 +1829,7 @@ function investInFund(fundId, amount){
   player.cash -= amount;
   player.fundInvestments.push({ fundId, amount, investedAt, resolveAt: investedAt + FUND_DURATION_MS });
   const fund = FUND_DEFS.find(f=>f.id===fundId);
-  showEventBanner(`💼 ${fund.name}에 ${won(amount)} 투자 완료! 10분 뒤 정산돼요`);
+  showEventBanner(`💼 ${fund.name}에 ${won(amount)} 투자 완료! 1시간 뒤 정산돼요`);
   renderWallet();
   renderFundPanel();
   pushScore();
@@ -1862,12 +1869,14 @@ function renderFundPanel(){
   listEl.innerHTML = player.fundInvestments.map(inv => {
     const fund = FUND_DEFS.find(f=>f.id===inv.fundId);
     const remainSec = Math.max(0, Math.ceil((inv.resolveAt - now)/1000));
-    const mm = String(Math.floor(remainSec/60)).padStart(2,"0");
+    const hh = Math.floor(remainSec/3600);
+    const mm = String(Math.floor((remainSec%3600)/60)).padStart(2,"0");
     const ss = String(remainSec%60).padStart(2,"0");
+    const timerText = hh > 0 ? `${hh}:${mm}:${ss}` : `${mm}:${ss}`;
     return `<div class="fund-row">
       <span class="fund-row-name">${fund ? fund.name : "?"}</span>
       <span class="fund-row-amount mono">${won(inv.amount)}</span>
-      <span class="fund-row-timer mono">${mm}:${ss}</span>
+      <span class="fund-row-timer mono">${timerText}</span>
     </div>`;
   }).join("");
 }
@@ -2480,22 +2489,24 @@ const bankruptcyModal = document.getElementById("bankruptcyModal");
 
 document.getElementById("bankruptcyBtn").addEventListener("click", () => {
   if(totalPortfolio() >= 0) return; // 방어: 버튼이 잠깐 풀려있는 타이밍 노려도 조건 재확인
+  const remainMs = BANKRUPTCY_COOLDOWN_MS - (Date.now() - lastBankruptcyAt);
+  if(remainMs > 0){
+    showEventBanner(`💥 파산 신청은 ${Math.ceil(remainMs/1000)}초 뒤에 다시 가능해요`);
+    return;
+  }
   bankruptcyModal.style.display = "flex";
 });
 document.getElementById("bankruptcyCancelBtn").addEventListener("click", () => {
   bankruptcyModal.style.display = "none";
 });
 document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => {
-  if(Date.now() - lastBankruptcyAt < BANKRUPTCY_COOLDOWN_MS){
-    showEventBanner(`💥 파산 신청은 10분마다 가능합니다.`);
-    return;
-  }
   player.cash = BANKRUPTCY_CASH;
   player.holdings = {};
   player.shortExpiry = {};
   player.longExpiry = {};
   player.marginDebt = {};
   player.avgCost = {};
+  player.shortProceeds = {};
   lastBankruptcyAt = Date.now();
   bankruptcyModal.style.display = "none";
   renderItems();
@@ -2527,6 +2538,7 @@ document.getElementById("rebirthConfirmBtn").addEventListener("click", () => {
   player.longExpiry = {};
   player.marginDebt = {};
   player.avgCost = {};
+  player.shortProceeds = {};
   rebirthModal.style.display = "none";
   renderItems();
   renderWallet();
@@ -2559,8 +2571,7 @@ function renderWallet(){
   returnEl.style.color = overallReturnPct >= 0 ? "var(--up)" : "var(--down)";
 
   const bankruptcyBtn = document.getElementById("bankruptcyBtn");
-  if(bankruptcyBtn) bankruptcyBtn.disabled = totalPortfolio() >= 0;
-
+  if(bankruptcyBtn) bankruptcyBtn.disabled = totalPortfolio() >= 0 || (Date.now() - lastBankruptcyAt) < BANKRUPTCY_COOLDOWN_MS;
   renderJobPanel();
   renderRebirthPanel();
 }
@@ -2716,7 +2727,8 @@ async function pushScore(){
         jobLevel: player.jobLevel,
         marginDebt: player.marginDebt,
         rebirthCount: player.rebirthCount,
-        fundInvestments: player.fundInvestments
+        fundInvestments: player.fundInvestments,
+        shortProceeds: player.shortProceeds
       })
     });
     const data = await res.json();
@@ -2927,6 +2939,7 @@ async function startGame(){
     player.jobLevel = Math.min(JOB_MAX_LEVEL, Math.max(1, Number(restored.jobLevel) || 1));
     player.marginDebt = restored.marginDebt || {};
     player.rebirthCount = Math.max(0, Math.round(Number(restored.rebirthCount) || 0));
+    player.shortProceeds = restored.shortProceeds || {};
     // 평균 매입가는 서버에 저장 안 하므로, 복구된 롱 포지션은 현재가를 매입가로 임시 설정 (수익률 0%부터 시작)
     player.avgCost = {};
     for(const id in player.holdings){

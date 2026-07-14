@@ -752,7 +752,7 @@
 
     <div class="board fund-board">
       <h3 class="board-title" style="margin-bottom:10px;">헤지펀드</h3>
-      <p class="board-sub" style="margin-bottom:10px;">원하는 펀드에 원하는 금액을 넣으면 <b>10분 뒤</b> 수익률에 따라 정산돼요.</p>
+      <p class="board-sub" style="margin-bottom:10px;">원하는 펀드에 원하는 금액을 넣으면 <b>1시간 뒤</b> 수익률에 따라 정산돼요.</p>
       <select id="fundSelect" class="fund-select">
         <option value="hojae">호재 펀드</option>
         <option value="neunghwan">릉환 펀드</option>
@@ -868,7 +868,7 @@
       <div class="patch-date">2026.07.13</div>
       <ul>
         <li>🍽️ <b>알바 수익 밸런스 조정</b> — 고레벨일수록 너무 잘 벌리던 문제를 완화 (성장폭 축소)</li>
-        <li>💼 <b>헤지펀드</b> 신설 — 호재/릉환/정근/종학/병권 펀드 중 골라 투자, 10분 뒤 수익률에 따라 자동 정산</li>
+        <li>💼 <b>헤지펀드</b> 신설 — 호재/릉환/정근/종학/병권 펀드 중 골라 투자, 1시간 뒤 수익률에 따라 자동 정산</li>
         <li>🪙 <b>돈까스 코인</b> 4종 신설 (프로틴/ESG/500원/덩크 코인) — 변동성이 훨씬 크고, <b>롱·숏 모두 25초 타임어택 만기</b>, 레버리지·숏 한도 5배</li>
         <li>계열 필터에 "코인" 카테고리 추가</li>
       </ul>
@@ -1033,7 +1033,7 @@
 
     <div class="guide-section">
       <h3>💼 헤지펀드</h3>
-      <p>사이드바에서 호재/릉환/정근/종학/병권 펀드 중 하나를 골라 원하는 금액을 투자할 수 있어요. <b>10분 뒤</b> 그 펀드의 수익률에 따라 원금이 불어나거나 줄어서 자동으로 돌아와요. 펀드마다 기대 수익률과 위험도가 달라요 — 종학 펀드는 변동폭이 작고 안정적인 편, 병권 펀드는 크게 벌 수도 크게 잃을 수도 있어요. 투자 중인 목록과 남은 시간은 패널에서 확인할 수 있어요.</p>
+      <p>사이드바에서 호재/릉환/정근/종학/병권 펀드 중 하나를 골라 원하는 금액을 투자할 수 있어요. <b>1시간 뒤</b> 그 펀드의 수익률에 따라 원금이 불어나거나 줄어서 자동으로 돌아와요. 펀드마다 기대 수익률과 위험도가 달라요 — 종학 펀드는 변동폭이 작고 안정적인 편, 병권 펀드는 크게 벌 수도 크게 잃을 수도 있어요. 투자 중인 목록과 남은 시간은 패널에서 확인할 수 있어요.</p>
     </div>
 
     <div class="guide-section">
@@ -1104,7 +1104,8 @@ function jobUpgradeCost(){
 }
 const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
 const BANKRUPTCY_CASH = 50000; // 파산 신청 시 재지급되는 금액 (시작 자금보다 적은 페널티)
-
+const BANKRUPTCY_COOLDOWN_MS = 10 * 60 * 1000; // 10분
+let lastBankruptcyAt = 0;
 /* ========================= 환생 ========================= */
 const REBIRTH_THRESHOLD = 50000000;      // 첫 환생 가능 최소 총자산 (5,000만원)
 const REBIRTH_THRESHOLD_GROWTH = 1.5;   // 환생할 때마다 다음 기준이 이 배율만큼 늘어남
@@ -1184,7 +1185,7 @@ const COIN_LONG_MATURITY_MS = 25000;  // 코인 롱 타임어택 만기 (25초)
 const COIN_SHORT_MATURITY_MS = 25000; // 코인 숏 타임어택 만기 (25초, 일반 종목의 SHORT_MATURITY_MS와 별개)
 
 /* ========================= 헤지펀드 ========================= */
-const FUND_DURATION_MS = 600000; // 10분 뒤 정산
+const FUND_DURATION_MS = 3600000; // 1시간 뒤 정산
 const FUND_MIN_INVEST = 1000;
 const FUND_DEFS = [
   { id:"hojae",      name:"호재 펀드",   min:-0.08, max:0.12 },
@@ -2485,12 +2486,17 @@ document.getElementById("bankruptcyCancelBtn").addEventListener("click", () => {
   bankruptcyModal.style.display = "none";
 });
 document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => {
+  if(Date.now() - lastBankruptcyAt < BANKRUPTCY_COOLDOWN_MS){
+    showEventBanner(`💥 파산 신청은 10분마다 가능합니다.`);
+    return;
+  }
   player.cash = BANKRUPTCY_CASH;
   player.holdings = {};
   player.shortExpiry = {};
   player.longExpiry = {};
   player.marginDebt = {};
   player.avgCost = {};
+  lastBankruptcyAt = Date.now();
   bankruptcyModal.style.display = "none";
   renderItems();
   renderWallet();
@@ -2554,6 +2560,7 @@ function renderWallet(){
 
   const bankruptcyBtn = document.getElementById("bankruptcyBtn");
   if(bankruptcyBtn) bankruptcyBtn.disabled = totalPortfolio() >= 0;
+
   renderJobPanel();
   renderRebirthPanel();
 }

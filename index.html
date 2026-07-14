@@ -740,7 +740,7 @@
 
     <div class="board bankruptcy-board">
       <h3 class="board-title" style="margin-bottom:10px;">파산 신청</h3>
-      <p class="board-sub" style="margin-bottom:14px;">평가 자산이 마이너스가 되면 신청할 수 있어요. 신청하면 모든 포지션이 정리되고 50,000원으로 다시 시작해요.</p>
+      <p class="board-sub" style="margin-bottom:14px;">평가 자산이 마이너스가 되면 신청할 수 있어요. 신청하면 모든 포지션이 정리되고 50,000원으로 다시 시작해요. (파산 신청 후 10분 쿨타임이 있어요)</p>
       <button id="bankruptcyBtn" class="bankruptcy-btn" disabled>파산 신청하기</button>
     </div>
 
@@ -843,6 +843,8 @@
       <div class="patch-date">2026.07.14 <span class="patch-tag">NEW</span></div>
       <ul>
         <li>🐛 <b>코인 레버리지 롱 타임어택 버그 수정</b> — 25초 만기로 강제 청산될 때 레버리지 부채를 상환하지 않고 전액 현금으로 지급되던 문제 수정. 이제 다른 청산 로직과 동일하게 매도 대금에서 부채를 먼저 차감한 뒤 정산돼요 (레버리지로 "공짜 이득"이 나던 버그 제거)</li>
+        <li>🛡️ <b>현금 부족 시 현물 배당(청산 방지)</b> — 매도·커버·만기청산 시 현금이 부족하면 빚(마이너스 현금)이 생기는 대신, 부족한 금액만큼 보유 종목을 현물로 지급하여 버그 악용을 원천 차단합니다.</li>
+        <li>⏳ <b>파산 신청 10분 쿨타임</b> 추가 — 파산을 악용하여 무한히 초기화하는 것을 방지합니다.</li>
       </ul>
     </div>
 
@@ -939,7 +941,7 @@
 
     <div class="guide-section">
       <h3>🔗 계열(섹터)</h3>
-      <p>각 카드 이름 옆에 <span class="sector-tag sector-premium">프리미엄</span> <span class="sector-tag sector-disease">질병</span> <span class="sector-tag sector-pet">반려동물</span> <span class="sector-tag sector-wild">야생</span> 태그가 붙어있어요. <b>같은 계열끼리는 가격이 어느 정도 같이 움직이는 경향</b>이 있어요 — 한 품목이 오르면 같은 계열의 다른 품목도 따라 오를 확률이 높아요. 가끔은 계열 전체가 한꺼번에 급등락하는 이벤트도 떠요. 이 관계를 파악하면 예측에 도움이 돼요.</p>
+      <p>각 카드 이름 옆에 <span class="sector-tag sector-premium">프리미엄</span> <span class="sector-tag sector-disease">질병</span> <span class="sector-tag sector-pet">반려동물</span> <span class="sector-tag sector-wild">야생</span> 태그가 붙어있어요. <b>같은 계열끼리는 가격이 어느 정도 같이 움직이는 경향</b>이 있어요 — 한 품목이 오르면 같은 계열의 다른 품목도 따라 오를 확률이 높아요. 가끔은 계열 전체가 한꺼번에 급등락하는 이벤트도 떠요. 이 관계를 파악하면 예측에 도움돼요.</p>
     </div>
 
     <div class="guide-section">
@@ -989,7 +991,7 @@
 
     <div class="guide-section">
       <h3>🏆 명예의 전당</h3>
-      <p>매주 한 번씩 순위가 초기화되는데, 초기화 직전 <b>환생 횟수가 가장 많은 사람</b>(동률이면 총자산이 더 많은 사람)이 그 주의 우승자로 명예의 전당에 기록돼요. 오른쪽 아래 🏆 버튼으로 역대 우승자를 볼 수 있어요.</p>
+      <p>매주 한 번씩 순위가 초기화되는데, 초기화 직전 <b>환생 횟수가 가장 많은 사람</b> (동률이면 총자산이 더 많은 사람)이 그 주의 우승자로 명예의 전당에 기록돼요. 오른쪽 아래 🏆 버튼으로 역대 우승자를 볼 수 있어요.</p>
     </div>
 
     <div class="guide-section">
@@ -1001,7 +1003,7 @@
         <li>반대로 가격이 오르면 손해를 볼 수 있어요 — 숏은 롱보다 위험 부담이 있는 대신 하락장에서도 돈을 벌 수 있는 방법이에요</li>
         <li>롱 보유 중엔 숏 불가, 숏 보유 중엔 롱 매수는 자동으로 커버부터 처리돼요</li>
         <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 3배</b>까지만 숏 노출이 허용돼요</li>
-        <li>숏은 <b>만기가 45초</b>예요. 진입/추가할 때마다 타이머가 45초로 갱신되고, 카드에 남은 시간이 표시돼요. 만기 지나면 그 순간 시장가로 <b>강제 청산</b>돼요 — 현금이 부족해도 강제로 집행되니 빚(마이너스 자산)이 생길 수 있어요, 그럴 땐 파산 신청을 쓰세요</li>
+        <li>숏은 <b>만기가 45초</b>예요. 진입/추가할 때마다 타이머가 45초로 갱신되고, 카드에 남은 시간이 표시돼요. 만기 지나면 그 순간 시장가로 <b>강제 청산</b>돼요. 단, 현금이 부족해도 빚이 생기지 않도록 보유 중인 돈까스(현물)로 대신 지급돼요.</li>
       </ul>
     </div>
 
@@ -1065,7 +1067,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-14-31";
+const BUILD_VERSION = "v2026-07-14-32";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1104,7 +1106,7 @@ function jobUpgradeCost(){
 }
 const MAINTENANCE_POLL_MS = 4000; // 점검 모드 확인 주기
 const BANKRUPTCY_CASH = 50000; // 파산 신청 시 재지급되는 금액 (시작 자금보다 적은 페널티)
-const BANKRUPTCY_COOLDOWN_MS = 10 * 60 * 1000; // 10분
+const BANKRUPTCY_COOLDOWN_MS = 10 * 60 * 1000; // 파산 10분 쿨타임
 let lastBankruptcyAt = 0;
 /* ========================= 환생 ========================= */
 const REBIRTH_THRESHOLD = 50000000;      // 첫 환생 가능 최소 총자산 (5,000만원)
@@ -1558,6 +1560,26 @@ function sendFinalStateBeacon(){
 window.addEventListener("pagehide", sendFinalStateBeacon);
 window.addEventListener("beforeunload", sendFinalStateBeacon);
 
+// 현금이 부족할 때 현금 대신 보유 종목(현물)로 지급해서 마이너스 현금(빚)이 생기는 걸 방지
+// (버그 악용 방지용)
+function payoutCashOrKind(itemId, requiredCash){
+  const it = items.find(i=>i.id===itemId);
+  if(player.cash >= requiredCash){
+    player.cash -= requiredCash;
+    return 0;
+  }
+  const shortfall = requiredCash - player.cash;
+  player.cash = 0;
+
+  if(it){
+    const kindQty = Math.ceil(shortfall / it.price);
+    player.holdings[itemId] = (player.holdings[itemId] || 0) - kindQty;
+    showEventBanner(`💸 현금이 부족해 ${it.name}(을)를 ${kindQty}개 현물로 지급했어요`);
+    return -kindQty; // 현물로 떼인 개수 반환
+  }
+  return 0;
+}
+
 function buy(id, qty, leverage){
   if(!canTrade()) return rejectTradeCooldown(id);
   leverage = LEVERAGE_OPTIONS.includes(leverage) ? leverage : 1;
@@ -1618,7 +1640,11 @@ function sell(id, qty){
   const feeRate = TRADE_FEE_RATE + (isCoin ? COIN_EXTRA_FEE_RATE : 0);
   const bonus = consumeRebirthBonusIfAvailable(); // 환생 보너스는 자체 쿨타임이 있어서 매번 적용되진 않음
   const grossProceeds = it.price * qty * (1 - feeRate) * (1 + bonus);
-  player.cash += Math.round(grossProceeds) - debtRepay;
+
+  // 현금 부족 방지 (빚 상환 시)
+  payoutCashOrKind(id, debtRepay);
+  player.cash += Math.round(grossProceeds);
+
   if(debt > 0){
     const remain = debt - debtRepay;
     if(remain > 0) player.marginDebt[id] = remain; else delete player.marginDebt[id];
@@ -1738,13 +1764,14 @@ function coverShort(id, qty){
   const isCoin = it.sector === "coin";
   const unitCost = it.price * (1 + (isCoin ? COIN_EXTRA_FEE_RATE : 0));
   qty = Math.min(qty, -have);
-  const maxAffordable = Math.floor(player.cash / unitCost);
-  qty = Math.min(qty, maxAffordable);
-  if(qty <= 0) return flashCard(id, "insufficient");
+  const totalCost = Math.round(unitCost * qty);
 
-  player.cash -= Math.round(unitCost * qty);
-  player.holdings[id] = have + qty;
+  // 현금 부족 방지: 부족하면 현물(해당 종목)로 지급
+  payoutCashOrKind(id, totalCost);
+
+  player.holdings[id] = have + qty; // 현물로 떼인 만큼 자동 감소가 되었을 수 있음
   if(player.holdings[id] >= 0) delete player.shortExpiry[id];
+
   markTraded();
   renderItems(); renderWallet();
   pushScore();
@@ -1759,10 +1786,13 @@ function forceLiquidateShort(itemId){
 
   const qty = -have;
   const cost = it.price * qty;
-  player.cash -= cost;
-  player.holdings[itemId] = 0;
-  delete player.shortExpiry[itemId];
-  showEventBanner(`⏰ ${it.name} 숏 포지션 만기! ${won(cost)}에 강제 청산됐어요`);
+  
+  // 강제 청산 시에도 현금 부족하면 현물로 지급
+  payoutCashOrKind(itemId, cost);
+  player.holdings[itemId] = player.holdings[itemId] || 0; // 현물 감소 반영
+  if(player.holdings[itemId] >= 0) delete player.shortExpiry[itemId];
+  
+  showEventBanner(`⏰ ${it.name} 숏 포지션 만기! 강제 청산됐어요`);
 }
 
 function checkShortExpiries(){
@@ -1791,12 +1821,19 @@ function forceLiquidateCoinLong(itemId){
   const grossProceeds = Math.round(it.price * have * (1 - feeRate));
   const netProceeds = grossProceeds - debt; // 부채부터 상환한 뒤 순수령액만 현금으로 지급
 
-  player.cash += netProceeds;
+  // 현금이 마이너스가 되는 것을 방지하기 위해 부족분은 현물로 지급(현재 코인이 없으므로 다른 종목을 임의로 빼거나, 부채만 남김)
+  // 단, netProceeds가 음수(손실)이더라도 일단 현금에서 차감하되 부족분은 현물 배당
+  if(netProceeds >= 0){
+    player.cash += netProceeds;
+  } else {
+    payoutCashOrKind(itemId, -netProceeds); // 손실 금액만큼 현물로 떼어냄
+  }
+  
   delete player.marginDebt[itemId];
   player.holdings[itemId] = 0;
   delete player.avgCost[itemId];
   delete player.longExpiry[itemId];
-  showEventBanner(`⏰ ${it.name} 타임어택 만기! ${won(netProceeds)}에 강제 매도됐어요`);
+  showEventBanner(`⏰ ${it.name} 타임어택 만기! 강제 매도됐어요`);
 }
 
 function checkLongExpiries(){
@@ -1822,7 +1859,7 @@ function investInFund(fundId, amount){
   player.cash -= amount;
   player.fundInvestments.push({ fundId, amount, investedAt, resolveAt: investedAt + FUND_DURATION_MS });
   const fund = FUND_DEFS.find(f=>f.id===fundId);
-  showEventBanner(`💼 ${fund.name}에 ${won(amount)} 투자 완료! 10분 뒤 정산돼요`);
+  showEventBanner(`💼 ${fund.name}에 ${won(amount)} 투자 완료! 1시간 뒤 정산돼요`);
   renderWallet();
   renderFundPanel();
   pushScore();
@@ -2098,7 +2135,14 @@ function forceLiquidateLong(itemId){
   if(!it || have <= 0){ delete player.marginDebt[itemId]; return; }
 
   const proceeds = it.price * have; // 강제청산이라 수수료 없이 시장가로 전량 정리, 빚부터 상환
-  player.cash += proceeds - debt;
+  const net = proceeds - debt;
+  
+  if(net >= 0){
+    player.cash += net;
+  } else {
+    payoutCashOrKind(itemId, -net);
+  }
+  
   player.holdings[itemId] = 0;
   delete player.marginDebt[itemId];
   showEventBanner(`⚠️ ${it.name} 마진콜! 레버리지 포지션이 강제 청산됐어요`);
@@ -2480,6 +2524,10 @@ const bankruptcyModal = document.getElementById("bankruptcyModal");
 
 document.getElementById("bankruptcyBtn").addEventListener("click", () => {
   if(totalPortfolio() >= 0) return; // 방어: 버튼이 잠깐 풀려있는 타이밍 노려도 조건 재확인
+  if(Date.now() - lastBankruptcyAt < BANKRUPTCY_COOLDOWN_MS) {
+    showEventBanner(`💥 파산 신청은 10분마다 가능합니다.`);
+    return;
+  }
   bankruptcyModal.style.display = "flex";
 });
 document.getElementById("bankruptcyCancelBtn").addEventListener("click", () => {
@@ -2488,6 +2536,7 @@ document.getElementById("bankruptcyCancelBtn").addEventListener("click", () => {
 document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => {
   if(Date.now() - lastBankruptcyAt < BANKRUPTCY_COOLDOWN_MS){
     showEventBanner(`💥 파산 신청은 10분마다 가능합니다.`);
+    bankruptcyModal.style.display = "none";
     return;
   }
   player.cash = BANKRUPTCY_CASH;
@@ -2500,7 +2549,7 @@ document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => 
   bankruptcyModal.style.display = "none";
   renderItems();
   renderWallet();
-  showEventBanner("💥 파산 신청 완료 — 50,000원으로 다시 시작합니다");
+  showEventBanner("💥 파산 신청 완료 — 50,000원으로 다시 시작합니다 (10분 쿨타임)");
   pushScore(); // 서버에 바로 반영
 });
 bankruptcyModal.addEventListener("click", (e) => {
@@ -2559,7 +2608,7 @@ function renderWallet(){
   returnEl.style.color = overallReturnPct >= 0 ? "var(--up)" : "var(--down)";
 
   const bankruptcyBtn = document.getElementById("bankruptcyBtn");
-  if(bankruptcyBtn) bankruptcyBtn.disabled = totalPortfolio() >= 0;
+  if(bankruptcyBtn) bankruptcyBtn.disabled = totalPortfolio() >= 0 || (Date.now() - lastBankruptcyAt < BANKRUPTCY_COOLDOWN_MS);
 
   renderJobPanel();
   renderRebirthPanel();

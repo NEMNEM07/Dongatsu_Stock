@@ -840,7 +840,14 @@
     <p style="font-size:13px;color:var(--cream-dim);margin:0;">돈까스거래소가 업데이트된 내역이에요.</p>
 
     <div class="patch-entry">
-      <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
+      <div class="patch-date">2026.07.14 <span class="patch-tag">NEW</span></div>
+      <ul>
+        <li>🐛 <b>코인 레버리지 롱 타임어택 버그 수정</b> — 25초 만기로 강제 청산될 때 레버리지 부채를 상환하지 않고 전액 현금으로 지급되던 문제 수정. 이제 다른 청산 로직과 동일하게 매도 대금에서 부채를 먼저 차감한 뒤 정산돼요 (레버리지로 "공짜 이득"이 나던 버그 제거)</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
       <ul>
         <li>🎫 <b>복권</b> 추가 — 1만/10만/100만/1천만/1억원권, 1등 상금 구매가의 500배(확률 100만분의 1). "긁기!"로 결과 확인. 평균 기대값 약 44%로 실제 복권처럼 설계</li>
       </ul>
@@ -1058,7 +1065,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-30";
+const BUILD_VERSION = "v2026-07-14-31";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1771,18 +1778,24 @@ function checkShortExpiries(){
 
 /* ========================= 코인 롱 타임어택 만기 강제청산 ========================= */
 // 코인은 롱도 시간이 지나면 강제로 시장가 매도됨 (타임어택)
+// [수정] 레버리지 부채(marginDebt)를 상환하지 않고 전액 현금 지급되던 버그를 고쳐,
+// 다른 청산 로직(sell, forceLiquidateLong)과 동일하게 매도 대금에서 부채를 먼저 차감함
 function forceLiquidateCoinLong(itemId){
   const it = items.find(i=>i.id===itemId);
   const have = player.holdings[itemId] || 0;
   if(!it || have <= 0){ delete player.longExpiry[itemId]; return; }
 
+  const debt = player.marginDebt[itemId] || 0;
   const feeRate = TRADE_FEE_RATE + COIN_EXTRA_FEE_RATE;
-  const proceeds = Math.round(it.price * have * (1 - feeRate));
-  player.cash += proceeds;
+  const grossProceeds = Math.round(it.price * have * (1 - feeRate));
+  const netProceeds = grossProceeds - debt; // 부채부터 상환한 뒤 순수령액만 현금으로 지급
+
+  player.cash += netProceeds;
+  delete player.marginDebt[itemId];
   player.holdings[itemId] = 0;
   delete player.avgCost[itemId];
   delete player.longExpiry[itemId];
-  showEventBanner(`⏰ ${it.name} 타임어택 만기! ${won(proceeds)}에 강제 매도됐어요`);
+  showEventBanner(`⏰ ${it.name} 타임어택 만기! ${won(netProceeds)}에 강제 매도됐어요`);
 }
 
 function checkLongExpiries(){

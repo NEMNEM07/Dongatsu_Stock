@@ -842,6 +842,14 @@
     <div class="patch-entry">
       <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
       <ul>
+        <li>🐛 <b>버그 수정</b>: 코인 레버리지 롱이 타임어택 만기로 강제청산될 때 부채가 정산 안 되던 문제 수정 (이제 정확히 부채만큼 차감)</li>
+        <li>🐛 <b>버그 수정</b>: 환생/파산 신청 시 진행 중인 펀드 투자가 안 없어지던 문제 수정 (이제 같이 몰수됨)</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
+      <ul>
         <li>💰 <b>숏 정산 구조 개편</b> — 숏 진입 시 매도대금을 현금으로 안 주고 예치금으로 보관 (복권/펀드 등에 못 굴리게 막음). 커버 시 손익을 그 순간 현금에 바로 반영 (마이너스 제한 없음)</li>
         <li>📈 <b>숏 포지션도 수익률 표시</b> — 평균 진입가 대비 실시간 수익률이 카드에 떠요</li>
         <li>🪙 코인 타임어택 만기 45초 → <b>25초</b>로 단축</li>
@@ -1069,7 +1077,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-33";
+const BUILD_VERSION = "v2026-07-13-34";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1808,13 +1816,15 @@ function forceLiquidateCoinLong(itemId){
   const have = player.holdings[itemId] || 0;
   if(!it || have <= 0){ delete player.longExpiry[itemId]; return; }
 
+  const debt = player.marginDebt[itemId] || 0;
   const feeRate = TRADE_FEE_RATE + COIN_EXTRA_FEE_RATE;
   const proceeds = Math.round(it.price * have * (1 - feeRate));
-  player.cash += proceeds;
+  player.cash += proceeds - debt; // 레버리지 부채가 있으면 여기서 정산 (마이너스여도 그대로 반영)
   player.holdings[itemId] = 0;
   delete player.avgCost[itemId];
   delete player.longExpiry[itemId];
-  showEventBanner(`⏰ ${it.name} 타임어택 만기! ${won(proceeds)}에 강제 매도됐어요`);
+  delete player.marginDebt[itemId];
+  showEventBanner(`⏰ ${it.name} 타임어택 만기! ${won(proceeds - debt)}에 강제 매도됐어요`);
 }
 
 function checkLongExpiries(){

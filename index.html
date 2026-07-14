@@ -842,7 +842,18 @@
     <div class="patch-entry">
       <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
       <ul>
-        <li>🎫 <b>복권</b> 추가 — 1만/10만/100만/1천만/1억원권, 1등 상금 구매가의 500배(확률 100만분의 1). "긁기!"로 결과 확인. 평균 기대값 약 44%로 실제 복권처럼 설계</li>
+        <li>💰 <b>숏 정산 구조 개편</b> — 숏 진입 시 매도대금을 현금으로 안 주고 예치금으로 보관 (복권/펀드 등에 못 굴리게 막음). 커버 시 손익을 그 순간 현금에 바로 반영 (마이너스 제한 없음)</li>
+        <li>📈 <b>숏 포지션도 수익률 표시</b> — 평균 진입가 대비 실시간 수익률이 카드에 떠요</li>
+        <li>🪙 코인 타임어택 만기 45초 → <b>25초</b>로 단축</li>
+        <li>💥 파산 신청 재신청 <b>5분 쿨타임</b> 버튼 표시 정상화</li>
+        <li>🔒 버전 불일치 시 접속 차단 — 서버가 요구하는 버전과 다르면 자동으로 화면이 막히고 새로고침됨</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
+      <ul>
+        <li>🎫 <b>복권</b> 추가 — 1만/10만/100만/1천만/1억원권, 1등 상금 구매가의 500배(확률 100만분의 1). 화면 중앙에서 실제로 <b>긁어서</b> 결과 확인 (80% 이상 긁으면 자동 공개). 평균 기대값 약 44%로 실제 복권처럼 설계</li>
       </ul>
     </div>
 
@@ -862,7 +873,7 @@
       <ul>
         <li>🍽️ <b>알바 수익 밸런스 조정</b> — 고레벨일수록 너무 잘 벌리던 문제를 완화 (성장폭 축소)</li>
         <li>💼 <b>헤지펀드</b> 신설 — 호재/릉환/정근/종학/병권 펀드 중 골라 투자, 10분 뒤 수익률에 따라 자동 정산</li>
-        <li>🪙 <b>돈까스 코인</b> 4종 신설 (프로틴/ESG/500원/덩크 코인) — 변동성이 훨씬 크고, <b>롱·숏 모두 45초 타임어택 만기</b>, 레버리지·숏 한도 5배</li>
+        <li>🪙 <b>돈까스 코인</b> 4종 신설 (프로틴/ESG/500원/덩크 코인) — 변동성이 훨씬 크고, <b>롱·숏 모두 25초 타임어택 만기</b>, 레버리지·숏 한도 5배</li>
         <li>계열 필터에 "코인" 카테고리 추가</li>
       </ul>
     </div>
@@ -977,7 +988,7 @@
 
     <div class="guide-section">
       <h3>📈 수익률</h3>
-      <p>보유 중인 종목엔 카드에 평균 매입가 대비 <b>수익률</b>이 표시돼요. 화면 상단 평가 자산 밑에는 <b>전체 수익률</b>(시작 자금 100,000원 대비)도 항상 보여요.</p>
+      <p>보유 중인 종목엔 카드에 평균 매입가(롱) 또는 평균 진입가(숏) 대비 <b>수익률</b>이 표시돼요. 화면 상단 평가 자산 밑에는 <b>전체 수익률</b>(시작 자금 100,000원 대비)도 항상 보여요.</p>
     </div>
 
     <div class="guide-section">
@@ -987,10 +998,10 @@
 
     <div class="guide-section">
       <h3><span class="guide-tag short">숏</span> 내릴 것 같을 때</h3>
-      <p>가격이 <b>내릴 것 같으면</b> 숏 모드로 바꾸고 <b>숏</b>을 눌러보세요. 지금 갖고 있지 않은 돈까스를 먼저 "빌려서 판다"고 생각하면 돼요 — 판 값이 먼저 현금으로 들어오고, 나중에 <b>커버</b>로 다시 사서 갚아요. 그 사이 가격이 <b>내려갈수록</b> 이득이에요.</p>
+      <p>가격이 <b>내릴 것 같으면</b> 숏 모드로 바꾸고 <b>숏</b>을 눌러보세요. 지금 갖고 있지 않은 돈까스를 먼저 "빌려서 판다"고 생각하면 돼요 — 판 값은 예치금으로 잡히고, 나중에 <b>커버</b>로 다시 사서 갚을 때 예치금과의 차액이 정산돼요. 그 사이 가격이 <b>내려갈수록</b> 이득이에요.</p>
       <ul>
-        <li><b>숏</b>: 지금 가격에 미리 팔아둠 (현금 증가, 대신 "빚"처럼 마이너스 보유가 생김)</li>
-        <li><b>커버</b>: 숏 갚기 - 가격이 내려갔을 때 싸게 사서 청산 (많이 내린 뒤에 커버할수록 이득)</li>
+        <li><b>숏</b>: 지금 가격에 미리 팔아둠 (단, 매도대금은 현금이 아니라 <b>예치금으로 보관</b>돼요 — 다른 데 쓸 수 없고, 평가 자산 계산엔 그대로 포함돼요)</li>
+        <li><b>커버</b>: 숏 갚기 - 가격이 내려갔을 때 싸게 사서 청산하면 예치금과의 차액(이득)이 현금으로 들어와요. 반대로 오르면 그 차액만큼 현금이 바로 깎여요(마이너스 제한 없음)</li>
         <li>반대로 가격이 오르면 손해를 볼 수 있어요 — 숏은 롱보다 위험 부담이 있는 대신 하락장에서도 돈을 벌 수 있는 방법이에요</li>
         <li>롱 보유 중엔 숏 불가, 숏 보유 중엔 롱 매수는 자동으로 커버부터 처리돼요</li>
         <li>숏 진입할 땐 <b>수수료 1%</b>가 붙어요. 또 무자본으로 무한정 숏칠 수 없게 <b>총자산의 3배</b>까지만 숏 노출이 허용돼요</li>
@@ -1008,7 +1019,7 @@
       <h3>🪙 돈까스 코인</h3>
       <p>일반 돈까스보다 <b>변동성이 훨씬 큰</b> 4종의 코인이에요 (프로틴/ESG/500원/덩크 코인). 계열 필터의 "코인"을 눌러 모아볼 수 있어요.</p>
       <ul>
-        <li><b>롱과 숏 모두 45초 타임어택 만기</b>가 있어요 — 사고 나서 오래 들고 있을 수 없고, 시간 지나면 그 순간 시장가로 강제 매도/청산돼요</li>
+        <li><b>롱과 숏 모두 25초 타임어택 만기</b>가 있어요 — 사고 나서 오래 들고 있을 수 없고, 시간 지나면 그 순간 시장가로 강제 매도/청산돼요</li>
         <li>레버리지 한도와 숏 노출 한도가 <b>5배</b>까지로 일반 종목보다 훨씬 크게 열려있어요</li>
         <li>대신 거래할 때마다 <b>추가 수수료 1%</b>가 더 붙어요</li>
         <li>가격이 오르내리는 방향 자체엔 유불리가 없어요(순수 랜덤). 대신 수수료 + 강제 회전 때문에 자주 들락날락할수록 평균적으로 손해가 쌓이기 쉬워요</li>
@@ -1058,7 +1069,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-31";
+const BUILD_VERSION = "v2026-07-13-32";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -2669,13 +2680,30 @@ function renderItems(){
     document.getElementById("have-"+it.id).textContent = haveText;
     document.getElementById("eval-"+it.id).textContent = have ? won(have*it.price) : "";
 
-    // 보유 중인 롱 포지션의 수익률 (평균 매입가 대비)
+    // 보유 중인 포지션의 수익률 (롱은 평균 매입가, 숏은 예치금으로 역산한 평균 진입가 기준)
     const returnEl = document.getElementById("return-"+it.id);
-    const avgCost = player.avgCost[it.id] || 0;
-    if(have > 0 && avgCost > 0){
-      const returnPct = (it.price - avgCost) / avgCost * 100;
-      returnEl.textContent = `수익률 ${returnPct>=0?"+":""}${returnPct.toFixed(1)}% (평균매입 ${won(avgCost)})`;
-      returnEl.className = "return-line mono " + (returnPct >= 0 ? "up" : "down");
+    if(have > 0){
+      const avgCost = player.avgCost[it.id] || 0;
+      if(avgCost > 0){
+        const returnPct = (it.price - avgCost) / avgCost * 100;
+        returnEl.textContent = `수익률 ${returnPct>=0?"+":""}${returnPct.toFixed(1)}% (평균매입 ${won(avgCost)})`;
+        returnEl.className = "return-line mono " + (returnPct >= 0 ? "up" : "down");
+      } else {
+        returnEl.textContent = "";
+        returnEl.className = "return-line mono";
+      }
+    } else if(have < 0){
+      const shortQty = -have;
+      const proceedsHeld = player.shortProceeds[it.id] || 0;
+      const entryPrice = shortQty > 0 ? proceedsHeld / shortQty : 0;
+      if(entryPrice > 0){
+        const returnPct = (entryPrice - it.price) / entryPrice * 100; // 가격이 내려가면 플러스(숏 이득)
+        returnEl.textContent = `수익률 ${returnPct>=0?"+":""}${returnPct.toFixed(1)}% (평균진입 ${won(entryPrice)})`;
+        returnEl.className = "return-line mono " + (returnPct >= 0 ? "up" : "down");
+      } else {
+        returnEl.textContent = "";
+        returnEl.className = "return-line mono";
+      }
     } else {
       returnEl.textContent = "";
       returnEl.className = "return-line mono";

@@ -790,7 +790,7 @@
   <div class="modal-card">
     <div class="eyebrow">Donkatsu Exchange</div>
     <h2>💥 파산 신청</h2>
-    <p>보유·숏 포지션이 모두 정리되고 자금이 <b>50,000원</b>으로 초기화돼요. 정말 신청할까요?</p>
+    <p>보유·숏 포지션이 모두 정리되고, <b>진행 중인 펀드 투자도 몰수</b>되며, 자금이 <b>50,000원</b>으로 초기화돼요. 정말 신청할까요?</p>
     <button id="bankruptcyConfirmBtn" class="danger">신청하기</button>
     <button id="bankruptcyCancelBtn" class="secondary">취소</button>
   </div>
@@ -800,7 +800,7 @@
   <div class="modal-card">
     <div class="eyebrow">Donkatsu Exchange</div>
     <h2>✨ 환생</h2>
-    <p>현금·보유·부채가 전부 초기화되고 <b>100,000원</b>으로 다시 시작해요. 대신 매도가 보너스가 <b id="rebirthNextBonus"></b>로 영구히 올라가요. 정말 환생할까요?</p>
+    <p>현금·보유·부채가 전부 초기화되고(<b>진행 중인 펀드 투자도 몰수</b>) <b>100,000원</b>으로 다시 시작해요. 대신 매도가 보너스가 <b id="rebirthNextBonus"></b>로 영구히 올라가요. 정말 환생할까요?</p>
     <button id="rebirthConfirmBtn" class="danger">환생하기</button>
     <button id="rebirthCancelBtn" class="secondary">취소</button>
   </div>
@@ -972,7 +972,7 @@
 
     <div class="guide-section">
       <h3>✨ 환생</h3>
-      <p>총자산이 <b>5,000만원</b>을 넘으면 사이드바에서 환생할 수 있어요. 환생하면 현금·보유·부채가 전부 초기화되고 100,000원으로 다시 시작하지만, 대신 <b>매도가에 영구 보너스(+1%/회)</b>가 붙어요. 여러 번 환생할수록 보너스가 쌓여서 다음 판이 점점 더 유리해지고, 대신 <b>다음 환생 기준 금액도 1.5배씩 늘어나요</b>(5,000만 → 7,500만 → 1억 1,250만…). 리더보드에도 환생 횟수가 ✨N으로 표시돼요.</p>
+      <p>총자산이 <b>5,000만원</b>을 넘으면 사이드바에서 환생할 수 있어요. 환생하면 현금·보유·부채가 전부 초기화되고(<b>진행 중인 펀드 투자도 몰수</b>) 100,000원으로 다시 시작하지만, 대신 <b>매도가에 영구 보너스(+1%/회)</b>가 붙어요. 여러 번 환생할수록 보너스가 쌓여서 다음 판이 점점 더 유리해지고, 대신 <b>다음 환생 기준 금액도 1.5배씩 늘어나요</b>(5,000만 → 7,500만 → 1억 1,250만…). 리더보드에도 환생 횟수가 ✨N으로 표시돼요.</p>
       <p>단, 이 매도 보너스는 <b>1분에 한 번만 적용</b>돼요. 매수·매도를 빠르게 반복해서 보너스를 여러 번 우려먹는 걸 막기 위한 장치예요.</p>
     </div>
 
@@ -1069,7 +1069,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-32";
+const BUILD_VERSION = "v2026-07-13-33";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -2518,10 +2518,12 @@ document.getElementById("bankruptcyConfirmBtn").addEventListener("click", () => 
   player.marginDebt = {};
   player.avgCost = {};
   player.shortProceeds = {};
+  player.fundInvestments = []; // 진행 중이던 펀드 투자도 몰수
   lastBankruptcyAt = Date.now();
   bankruptcyModal.style.display = "none";
   renderItems();
   renderWallet();
+  renderFundPanel();
   showEventBanner("💥 파산 신청 완료 — 50,000원으로 다시 시작합니다");
   pushScore(); // 서버에 바로 반영
 });
@@ -2550,9 +2552,11 @@ document.getElementById("rebirthConfirmBtn").addEventListener("click", () => {
   player.marginDebt = {};
   player.avgCost = {};
   player.shortProceeds = {};
+  player.fundInvestments = []; // 진행 중이던 펀드 투자도 몰수 (완전 초기화 취지에 맞춤)
   rebirthModal.style.display = "none";
   renderItems();
   renderWallet();
+  renderFundPanel();
   const bonusPct = (rebirthSellBonus() * 100).toFixed(0);
   showEventBanner(`✨ 환생 완료! ${player.rebirthCount}회차 — 매도가 영구 보너스 +${bonusPct}%`);
   pushScore(); // 서버에 바로 반영

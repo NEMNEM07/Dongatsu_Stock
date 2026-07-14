@@ -574,6 +574,35 @@
   }
   .suggest-textarea:focus{outline:1px solid var(--gold);}
   .suggest-counter{font-size:11px;color:var(--cream-dim);text-align:right;margin-bottom:10px;}
+
+  .donate-fab{
+    position:fixed;right:22px;bottom:246px;
+    width:46px;height:46px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold-bright),var(--gold));
+    color:#1a1305;
+    border:none;font-size:20px;font-weight:700;
+    cursor:pointer;box-shadow:var(--shadow);
+    z-index:350;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .15s ease, filter .15s ease;
+  }
+  .donate-fab:hover{transform:scale(1.08);filter:brightness(1.1);}
+  .donate-account-box{
+    margin:16px 0;padding:16px;
+    background:var(--ink-900);border:1px solid var(--gold);border-radius:10px;
+    text-align:center;
+  }
+  .donate-bank{font-size:12px;color:var(--cream-dim);margin-bottom:4px;}
+  .donate-number{
+    font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;
+    color:var(--gold-bright);letter-spacing:.03em;
+  }
+  .donate-copy-btn{
+    width:100%;padding:11px;border:none;border-radius:8px;
+    background:var(--gold);color:#1a1305;font-weight:800;font-size:13px;
+    cursor:pointer;margin-top:10px;
+  }
+  .donate-copy-btn:hover{filter:brightness(1.08);}
   #hofModal{ z-index:360; align-items:flex-start; padding:40px 16px; overflow-y:auto; }
   .hof-row{
     display:flex;align-items:center;gap:12px;
@@ -843,6 +872,21 @@
 <button id="patchNotesBtn" class="patch-fab" aria-label="패치노트 보기" title="패치노트">📋</button>
 <button id="guideBtn" class="guide-fab" aria-label="가이드 보기" title="가이드 보기">ⓘ</button>
 <button id="suggestBtn" class="suggest-fab" aria-label="건의하기" title="건의하기">💬</button>
+<button id="donateBtn" class="donate-fab" aria-label="후원하기" title="후원하기">💛</button>
+
+<div id="donateModal" class="full-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="eyebrow">Donkatsu Exchange</div>
+    <h2>💛 후원하기</h2>
+    <p style="font-size:12.5px;color:var(--cream-dim);margin:0;">돈까스거래소가 재밌었다면, 개발자에게 커피 한 잔 후원해주셔도 좋아요! (물론 안 하셔도 전혀 상관없어요 🙂)</p>
+    <div class="donate-account-box">
+      <div class="donate-bank">토스뱅크</div>
+      <div class="donate-number" id="donateAccountNumber">1002-4276-1665</div>
+    </div>
+    <button class="donate-copy-btn" id="donateCopyBtn">계좌번호 복사하기</button>
+    <button id="donateCloseBtn" class="secondary">닫기</button>
+  </div>
+</div>
 
 <div id="suggestModal" class="full-overlay" style="display:none;">
   <div class="modal-card">
@@ -876,6 +920,13 @@
 
     <div class="patch-entry">
       <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
+      <ul>
+        <li>💛 <b>후원하기</b> 버튼 추가</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
       <ul>
         <li>💬 <b>건의하기</b> 버튼 추가 — 버그 제보나 기능 건의를 적어서 보내면 운영자가 따로 모아서 볼 수 있어요</li>
       </ul>
@@ -1132,7 +1183,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-36";
+const BUILD_VERSION = "v2026-07-13-37";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -2500,6 +2551,29 @@ guideModal.addEventListener("click", (e) => {
 });
 
 /* ========================= 명예의 전당 ========================= */
+/* ========================= 후원하기 ========================= */
+const donateModal = document.getElementById("donateModal");
+document.getElementById("donateBtn").addEventListener("click", () => {
+  donateModal.style.display = "flex";
+});
+document.getElementById("donateCloseBtn").addEventListener("click", () => {
+  donateModal.style.display = "none";
+});
+donateModal.addEventListener("click", (e) => {
+  if(e.target === donateModal) donateModal.style.display = "none";
+});
+document.getElementById("donateCopyBtn").addEventListener("click", async () => {
+  const number = document.getElementById("donateAccountNumber").textContent;
+  const btn = document.getElementById("donateCopyBtn");
+  try{
+    await navigator.clipboard.writeText(number);
+    btn.textContent = "✅ 복사됐어요!";
+  }catch(e){
+    btn.textContent = "복사 실패 - 직접 적어주세요";
+  }
+  setTimeout(()=>{ btn.textContent = "계좌번호 복사하기"; }, 2000);
+});
+
 /* ========================= 건의하기 ========================= */
 const suggestModal = document.getElementById("suggestModal");
 const suggestText = document.getElementById("suggestText");
@@ -2607,6 +2681,7 @@ document.addEventListener("keydown", (e) => {
   if(patchModal.style.display === "flex") patchModal.style.display = "none";
   if(hofModal.style.display === "flex") hofModal.style.display = "none";
   if(suggestModal.style.display === "flex") suggestModal.style.display = "none";
+  if(donateModal.style.display === "flex") donateModal.style.display = "none";
   if(bankruptcyModal.style.display === "flex") bankruptcyModal.style.display = "none";
   if(rebirthModal.style.display === "flex") rebirthModal.style.display = "none";
   if(lotteryScratchModal.style.display === "flex" && scratchRevealed) lotteryScratchModal.style.display = "none";

@@ -842,6 +842,13 @@
     <div class="patch-entry">
       <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
       <ul>
+        <li>🐛 <b>버그 수정</b>: 같은 계정을 여러 기기/탭에서 동시에 켜놨을 때, 나중에 저장되는 낡은 기기 값이 환생 횟수·알바 레벨을 되돌리던 문제 수정 (이제 서버가 더 큰 값만 인정)</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
+      <ul>
         <li>🐛 <b>버그 수정</b>: 코인 레버리지 롱이 타임어택 만기로 강제청산될 때 부채가 정산 안 되던 문제 수정 (이제 정확히 부채만큼 차감)</li>
         <li>🐛 <b>버그 수정</b>: 환생/파산 신청 시 진행 중인 펀드 투자가 안 없어지던 문제 수정 (이제 같이 몰수됨)</li>
       </ul>
@@ -1067,6 +1074,7 @@
     <div class="guide-section">
       <h3>🔑 계정</h3>
       <p>처음 입장할 때 정한 이름+비밀번호가 곧 내 계정이에요. 같은 이름+비밀번호로 다시 들어오면 이전 자산 그대로 이어서 할 수 있어요. 비밀번호가 틀리면 못 들어가니 잘 기억해두세요.</p>
+      <p>⚠️ 같은 계정을 <b>여러 기기나 탭에서 동시에</b> 켜놓지 마세요 — 나중에 저장되는 쪽이 앞선 진행을 덮어쓸 수 있어요 (환생/알바 레벨은 보호되지만, 자산·보유 종목은 안전하지 않아요). 한 번에 한 곳에서만 플레이하세요.</p>
     </div>
   </div>
 </div>
@@ -1077,7 +1085,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-34";
+const BUILD_VERSION = "v2026-07-13-35";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1461,22 +1469,7 @@ function processTick(tick, silent){
     for(const it of items) it._eventFlash = null;
   }
 }
-  
-setInterval(checkNotice, 5000);
 
-let lastNoticeTime = 0;
-
-async function checkNotice() {
-    const res = await fetch(APPS_SCRIPT_URL + "?action=notice");
-    const data = await res.json();
-
-    if (!data.notice) return;
-
-    if (data.notice.time !== lastNoticeTime) {
-        lastNoticeTime = data.notice.time;
-        alert(data.notice.message);
-    }
-}
 // simTick부터 targetTick까지 순서대로 따라잡음. 처음 입장 시 과거 틱을 몰아서 계산할 때는 silent=true로 배너 생략.
 function catchUpTo(targetTick, silent){
   while(simTick < targetTick){

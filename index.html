@@ -483,6 +483,11 @@
   .lb-rebirth{
     margin-left:5px;font-size:10px;font-weight:800;color:var(--gold-bright);
   }
+  .lb-online-dot{
+    display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--up);margin-right:6px;vertical-align:middle;
+    box-shadow:0 0 4px var(--up);
+  }
   .lb-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--gold-bright);}
   .lb-empty{color:var(--cream-dim);font-size:12px;padding:8px 6px;}
   .lb-status{font-size:10.5px;color:var(--cream-dim);margin-top:10px;text-align:right;}
@@ -921,6 +926,14 @@
     <div class="patch-entry">
       <div class="patch-date">2026.07.13 <span class="patch-tag">NEW</span></div>
       <ul>
+        <li>🟢 리더보드에 <b>접속 중</b>(초록 점) 표시 추가</li>
+        <li>🍽️ 알바 업그레이드 상한 Lv.10 → <b>Lv.20</b>으로 확대, 크리티컬 확률 상한도 18% → 25%로 상향 (버프)</li>
+      </ul>
+    </div>
+
+    <div class="patch-entry">
+      <div class="patch-date">2026.07.13</div>
+      <ul>
         <li>💛 <b>후원하기</b> 버튼 추가</li>
       </ul>
     </div>
@@ -1120,7 +1133,7 @@
     <div class="guide-section">
       <h3>🍽️ 알바</h3>
       <p>시세가 안 움직여서 심심할 때, 사이드바의 알바 버튼을 눌러보세요. 처음엔 클릭 한 번에 100~200원을 랜덤으로 벌 수 있고, 쿨다운은 1초예요.</p>
-      <p>돈을 내고 <b>업그레이드</b>하면 레벨이 올라서 쿨다운이 짧아지고, 벌 수 있는 금액도 늘고, 가끔 <b>크리티컬</b>(x2 획득)이 터지기 시작해요. 최대 <b>Lv.10</b>까지 올릴 수 있어요.</p>
+      <p>돈을 내고 <b>업그레이드</b>하면 레벨이 올라서 쿨다운이 짧아지고, 벌 수 있는 금액도 늘고, 가끔 <b>크리티컬</b>(x2 획득)이 터지기 시작해요. 최대 <b>Lv.20</b>까지 올릴 수 있어요.</p>
     </div>
 
     <div class="guide-section">
@@ -1183,7 +1196,7 @@
 /* ========================= 설정 ========================= */
 // 배포 후 아래 URL을 Apps Script 웹앱 URL로 교체하세요. 비워두면 로컬(나만 보이는) 순위로 동작합니다.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_aGS7i6wk_6HSDViRNI8nwFiZ0vjO283Psr5eXi4a7rlmdN4pQNnKFIppKbCwA3wk/exec";
-const BUILD_VERSION = "v2026-07-13-37";
+const BUILD_VERSION = "v2026-07-13-38";
 document.getElementById("buildVersion").textContent = "build " + BUILD_VERSION;
 
 const TICK_MS = 3000;          // 가격 갱신 주기 (모든 클라이언트 공통)
@@ -1194,14 +1207,14 @@ const LB_POLL_MS = 5000;       // 리더보드 갱신 주기
 const HISTORY_LEN = 30;
 
 // 알바 레벨 시스템: 레벨이 오를수록 쿨타임 감소 / 획득액 증가 / 크리티컬 확률 증가
-const JOB_MAX_LEVEL = 10;
+const JOB_MAX_LEVEL = 20; // 10 -> 20으로 상한 확대 (버프)
 const JOB_BASE_COOLDOWN_MS = 1000;
 const JOB_COOLDOWN_DECAY = 0.96;   // 레벨당 쿨타임 96%로 감소 (완만하게)
 const JOB_BASE_MIN_EARN = 100;
 const JOB_BASE_MAX_EARN = 200;
 const JOB_EARN_GROWTH = 0.08;      // 레벨당 획득액 +8% (기존 18%에서 축소)
 const JOB_CRIT_PER_LEVEL = 0.02;   // 레벨당 크리티컬 확률 +2%
-const JOB_CRIT_MAX_CHANCE = 0.18;  // 크리티컬 확률 최대 18%
+const JOB_CRIT_MAX_CHANCE = 0.25;  // 크리티컬 확률 최대 25% (레벨 상한 확대에 맞춰 소폭 상향)
 const JOB_CRIT_MULTIPLIER = 2;     // 크리티컬 시 2배 (기존 3배에서 축소)
 const JOB_UPGRADE_BASE_COST = 3000;
 const JOB_UPGRADE_GROWTH = 1.6;    // 업그레이드 비용이 레벨마다 1.6배씩 증가
@@ -2976,7 +2989,7 @@ async function fetchLeaderboard(){
   const listEl = document.getElementById("leaderboardList");
   if(!APPS_SCRIPT_URL){
     // 백엔드 미설정: 로컬 1인 순위만 표시
-    renderLeaderboardRows([{ name: player.name || "나", total: totalPortfolio(), rebirthCount: player.rebirthCount }]);
+    renderLeaderboardRows([{ name: player.name || "나", total: totalPortfolio(), rebirthCount: player.rebirthCount, online: true }]);
     document.getElementById("lbStatus").textContent = "백엔드 미연결 · 로컬 모드";
     return;
   }
@@ -2997,10 +3010,11 @@ function renderLeaderboardRows(rows){
   listEl.innerHTML = rows.slice(0,20).map((r,i)=>{
     const rc = r.rebirthCount || 0;
     const rebirthTag = rc > 0 ? `<span class="lb-rebirth">✨${rc}</span>` : "";
+    const onlineDot = r.online ? `<span class="lb-online-dot" title="접속 중"></span>` : "";
     return `
     <div class="lb-row ${r.name===player.name?'me':''}">
       <div class="lb-rank">${i+1}</div>
-      <div class="lb-name">${escapeHtml(r.name)}${rebirthTag}</div>
+      <div class="lb-name">${onlineDot}${escapeHtml(r.name)}${rebirthTag}</div>
       <div class="lb-val mono">${won(r.total)}</div>
     </div>
   `;
